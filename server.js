@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ── Database (simple JSON file) ──────────────────────────────
-const DB_FILE = path.join(__dirname, 'data.json');
+const DB_FILE = process.env.DATA_PATH || path.join(__dirname, 'data.json');
 
 function loadState() {
   try {
