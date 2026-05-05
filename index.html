@@ -290,6 +290,34 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 </div>
 
 <script>
+const WS_URL = window.location.protocol === 'https:' ? 
+  'wss://' + window.location.host : 
+  'ws://' + window.location.host;
+
+let ws;
+let state = {
+  counter:0, queue:[], mgrServing:{}, conServing:{},
+  conQueue:[], mgrHistory:[], conHistory:[], lastMgr:null, lastCon:null
+};
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => { console.log('Connected'); document.getElementById('ws-status').textContent = ''; };
+  ws.onclose = () => { 
+    document.getElementById('ws-status').textContent = '⚠ Ulanish yoq / Net soedinenia';
+    setTimeout(connect, 2000); 
+  };
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'state') { state = data.state; render(); }
+  };
+}
+
+function send(type, payload={}) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type, payload }));
+}
+
+connect();
 const LOGO=document.getElementById('_logo').src;
 const SLIDES=Array.from(document.querySelectorAll('._slide')).map(e=>e.src);
 const BG_SLIDES=Array.from(document.querySelectorAll('._bg')).map(e=>e.src);
@@ -473,35 +501,6 @@ render();
 </script>
 <div id="ws-status" style="position:fixed;bottom:8px;right:8px;font-size:11px;color:#f87171;z-index:999"></div>
 
-<script>
-const WS_URL = window.location.protocol === 'https:' ? 
-  'wss://' + window.location.host : 
-  'ws://' + window.location.host;
 
-let ws;
-let state = {
-  counter:0, queue:[], mgrServing:{}, conServing:{},
-  conQueue:[], mgrHistory:[], conHistory:[], lastMgr:null, lastCon:null
-};
-
-function connect() {
-  ws = new WebSocket(WS_URL);
-  ws.onopen = () => { console.log('Connected'); document.getElementById('ws-status').textContent = ''; };
-  ws.onclose = () => { 
-    document.getElementById('ws-status').textContent = '⚠ Ulanish yo'q / Нет соединения';
-    setTimeout(connect, 2000); 
-  };
-  ws.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    if (data.type === 'state') { state = data.state; render(); }
-  };
-}
-
-function send(type, payload={}) {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type, payload }));
-}
-
-connect();
-</script>
 
 </body></html>
