@@ -371,6 +371,13 @@ function render(){
   const lastCon=state.lastCon||null;
   const mCur=mgrS[mid];const cCur=conS[cid];
   document.getElementById('k-wait').textContent=queue.length;
+  // Show last issued ticket number on kiosk
+  if(state.counter>0){
+    const lastTicket='A'+String(state.counter).padStart(3,'0');
+    const klast=document.getElementById('kiosk-last');
+    if(klast&&klast.innerHTML.includes('...'))
+      klast.innerHTML='<div style="margin-top:1.5rem"><span style="font-size:48px;font-weight:700;color:#c9a96e">'+lastTicket+'</span><br><span style="font-size:16px;color:#94a3b8;margin-top:8px;display:block">Номерок выдан · ожидайте вызова на экране</span><br><span style="font-size:14px;color:#64748b;display:block;margin-top:4px">Raqamcha berildi · ekrandagi chaqiruvni kuting</span></div>';
+  }
   document.getElementById('k-free').textContent=MGR_DESKS.filter((_,i)=>!mgrS[i]).length;
   document.getElementById('mgr-cur').textContent=mCur?mCur.ticket:'—';
   document.getElementById('mgr-st').textContent=mCur?'Клиент у стола':'Нет клиента';
