@@ -341,37 +341,39 @@ function speak(text){ /* озвучка отключена — будет доб
 function addClient(){
   send('ADD_CLIENT');
   document.getElementById('kiosk-last').innerHTML='<div style="margin-top:1.5rem"><span style="font-size:48px;font-weight:700;color:#c9a96e">'+t+'</span><br><span style="font-size:16px;color:#94a3b8;margin-top:8px;display:block">Номерок выдан · ожидайте вызова на экране</span></div>';
-  speak('Номер '+t);render();
 }
+
 function nextClient(){
   const mid=+document.getElementById('mgr-sel').value;
-  if(mgrS[mid]||queue.length===0)return;
-  const item=queue.shift();const t=item.ticket||item;mgrS[mid]={ticket:t,startTs:Date.now()};
-  lastMgr={ticket:t,desk:MGR_DESKS[mid],manager:MGR_NAMES[mid]};
-  speak('Номер '+t+', '+MGR_DESKS[mid]);render();
+  const _mgrS=state.mgrServing||{};
+  const _q=state.queue||[];
+  if(_mgrS[mid]||_q.length===0)return;
+  send('NEXT_CLIENT',{mid,desk:MGR_DESKS[mid],manager:MGR_NAMES[mid]});
 }
 function doneClient(){
   const mid=+document.getElementById('mgr-sel').value;
   send('DONE_CLIENT',{mid,desk:MGR_DESKS[mid],manager:MGR_NAMES[mid]});
 }
 function sendToContract(){
-  const mid=+document.getElementById('mgr-sel').value;const s=mgrS[mid];if(!s)return;
+  const mid=+document.getElementById('mgr-sel').value;
+  const s=(state.mgrServing||{})[mid];if(!s)return;
   const cn=document.getElementById('cnum-inp').value.trim()||'—';
   const apt=document.getElementById('apt-inp').value.trim()||'—';
-  conQ.push({ticket:s.ticket,contractNum:cn,apt:apt,from:MGR_DESKS[mid],manager:MGR_NAMES[mid],time:nowStr()});
-  mgrH.unshift({ticket:s.ticket,desk:MGR_DESKS[mid],manager:MGR_NAMES[mid],dur:Math.floor((Date.now()-s.startTs)/60000),contractNum:cn,apt:apt,time:nowStr(),sent:true});
-  delete mgrS[mid];
-  document.getElementById('cnum-inp').value='';document.getElementById('apt-inp').value='';
-  speak('Номер '+s.ticket+', договорной отдел');render();
+  send('SEND_CONTRACT',{mid,desk:MGR_DESKS[mid],manager:MGR_NAMES[mid],contractNum:cn,apt});
+  document.getElementById('cnum-inp').value='';
+  document.getElementById('apt-inp').value='';
 }
 function takeContract(){
   const cid=+document.getElementById('con-sel').value;
+  const _conS=state.conServing||{};
+  const _conQ=state.conQueue||[];
+  if(_conS[cid]||_conQ.length===0)return;
   send('TAKE_CONTRACT',{cid});
 }
 function markReady(){
-  const cid=+document.getElementById('con-sel').value;const s=conS[cid];if(!s)return;
-  s.status='ready';lastCon={ticket:s.ticket,desk:CON_DESKS[cid],contractNum:s.contractNum};
-  speak('Номер '+s.ticket+', '+CON_DESKS[cid]+', договор готов');render();
+  const cid=+document.getElementById('con-sel').value;
+  if(!(state.conServing||{})[cid])return;
+  send('MARK_READY',{cid,desk:CON_DESKS[cid]});
 }
 function clientSigned(){
   const cid=+document.getElementById('con-sel').value;
