@@ -10,6 +10,7 @@ const wss = new WebSocketServer({ server });
 
 app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/report', (req, res) => res.sendFile(path.join(__dirname, 'report.html')));
 
 const DATA_DIR = process.env.DATA_PATH ? path.dirname(process.env.DATA_PATH) : __dirname;
 const STATE_FILE = process.env.DATA_PATH || path.join(__dirname, 'data.json');

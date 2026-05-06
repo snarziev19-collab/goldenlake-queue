@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Golden Lake — Отчёт</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-height:100vh}
+.lock{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
+.lock h2{font-size:20px;color:#94a3b8}
+.lock input{padding:12px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:16px;width:260px;text-align:center}
+.lock button{padding:10px 28px;border-radius:8px;background:#1e3a5f;color:#38bdf8;border:1px solid #38bdf8;font-size:14px;cursor:pointer}
+.lock .err{color:#f87171;font-size:13px;display:none}
+.wrap{padding:20px;max-width:1200px;margin:0 auto}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.header h1{font-size:22px;font-weight:700}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,button{padding:8px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:13px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center}
+.kpi-v{font-size:30px;font-weight:700}
+.kpi-l{font-size:11px;color:#475569;margin-top:4px}
+.c-blue{color:#38bdf8}.c-green{color:#4ade80}.c-yellow{color:#fbbf24}.c-purple{color:#c084fc}.c-red{color:#f87171}
+.sec{font-size:11px;font-weight:600;color:#475569;letter-spacing:.06em;text-transform:uppercase;margin:20px 0 10px}
+table{width:100%;border-collapse:collapse;background:#0f172a;border-radius:10px;overflow:hidden;margin-bottom:20px}
+th{padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;background:#0a0f1e;border-bottom:1px solid #1e293b}
+td{padding:9px 14px;font-size:13px;border-bottom:1px solid #1e293b;color:#94a3b8}
+td:first-child{color:#f1f5f9;font-weight:500}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.b-blue{background:#1e3a5f;color:#38bdf8}
+.b-green{background:#0f3d23;color:#4ade80}
+.days-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.day-btn{padding:5px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#64748b;font-size:12px;cursor:pointer}
+.day-btn.active{background:#1e3a5f;color:#38bdf8;border-color:#38bdf8}
+.loading{text-align:center;color:#475569;padding:40px}
+</style>
+</head><body>
+
+<!-- Lock screen -->
+<div class="lock" id="lock-screen">
+  <div style="font-size:32px">🔒</div>
+  <h2>Golden Lake — Отчёт руководителя</h2>
+  <input type="password" id="pass-input" placeholder="Введите пароль" onkeydown="if(event.key==='Enter')checkPass()">
+  <button onclick="checkPass()">Войти</button>
+  <div class="err" id="pass-err">Неверный пароль</div>
+</div>
+
+<!-- Report -->
+<div id="report-screen" style="display:none">
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1>📊 Отчёт Golden Lake</h1>
+        <div id="report-date" style="font-size:12px;color:#475569;margin-top:4px"></div>
+      </div>
+      <div class="controls">
+        <select id="period-sel" onchange="onPeriodChange()">
+          <option value="today">Сегодня</option>
+          <option value="day">Выбрать день</option>
+          <option value="all">Все дни (сводка)</option>
+        </select>
+        <div id="day-picker" style="display:none">
+          <select id="day-sel" onchange="loadReport()"></select>
+        </div>
+        <button onclick="loadReport()">🔄 Обновить</button>
+        <button onclick="doLock()">Выйти</button>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">Загрузка...</div>
+
+    <div id="report-content" style="display:none">
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-v c-blue" id="k-total">0</div><div class="kpi-l">Всего клиентов</div></div>
+        <div class="kpi"><div class="kpi-v c-green" id="k-contracts">0</div><div class="kpi-l">Договоров подписано</div></div>
+        <div class="kpi"><div class="kpi-v c-yellow" id="k-avgmgr">0</div><div class="kpi-l">Ср. время с менеджером (мин)</div></div>
+        <div class="kpi"><div class="kpi-v c-purple" id="k-avgcon">0</div><div class="kpi-l">Ср. время договора (мин)</div></div>
+        <div class="kpi"><div class="kpi-v c-red" id="k-conv">0%</div><div class="kpi-l">Конверсия в договор</div></div>
+      </div>
+
+      <!-- All days summary -->
+      <div id="all-days-section" style="display:none">
+        <div class="sec">По дням</div>
+        <table>
+          <thead><tr>
+            <th>Дата</th><th>Клиентов</th><th>Договоров</th><th>Конверсия</th><th>Ср. время (мин)</th>
+          </tr></thead>
+          <tbody id="days-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Manager stats -->
+      <div class="sec">Статистика менеджеров</div>
+      <table>
+        <thead><tr>
+          <th>Менеджер</th><th>Клиентов</th><th>В договорной</th><th>Ср. время</th>
+        </tr></thead>
+        <tbody id="mgr-body"></tbody>
+      </table>
+
+      <!-- Contract stats -->
+      <div class="sec">Договорной отдел</div>
+      <table>
+        <thead><tr>
+          <th>Сотрудник</th><th>Договоров</th><th>Ср. время</th>
+        </tr></thead>
+        <tbody id="con-body"></tbody>
+      </table>
+
+      <!-- History -->
+      <div class="sec">История клиентов</div>
+      <table>
+        <thead><tr>
+          <th>Номер</th><th>Менеджер</th><th>Стол</th><th>Время (мин)</th><th>Итог</th><th>Время</th>
+        </tr></thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASS = 'taqdimot08/05';
+const MGR_NAMES = ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'];
+const MGR_DESKS = ['Стол 1','Стол 2','Стол 3','Стол 4','Стол 5','Стол 6','Стол 7','Стол 8','Стол 9','Стол 10'];
+const CON_NAMES = ['Viktoria','Samira','Rayxona','Gulmira','Aziz'];
+const CON_DESKS = ['Стол Д1','Стол Д2','Стол Д3','Стол Д4','Стол Д5'];
+
+let historyData = {};
+let currentState = {};
+
+function checkPass() {
+  if(document.getElementById('pass-input').value === PASS) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('report-screen').style.display = 'block';
+    loadReport();
+  } else {
+    document.getElementById('pass-err').style.display = 'block';
+  }
+}
+
+function doLock() {
+  document.getElementById('lock-screen').style.display = 'flex';
+  document.getElementById('report-screen').style.display = 'none';
+  document.getElementById('pass-input').value = '';
+}
+
+function onPeriodChange() {
+  const p = document.getElementById('period-sel').value;
+  document.getElementById('day-picker').style.display = p === 'day' ? 'block' : 'none';
+  loadReport();
+}
+
+async function loadReport() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('report-content').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/history');
+    historyData = await res.json();
+
+    // Populate day selector
+    const days = Object.keys(historyData).sort().reverse();
+    const daySel = document.getElementById('day-sel');
+    daySel.innerHTML = days.map(d => `<option value="${d}">${d}</option>`).join('');
+
+    const period = document.getElementById('period-sel').value;
+
+    if(period === 'today') {
+      const todayKey = getTodayKey();
+      const todayData = historyData[todayKey] || {counter:0, mgrHistory:[], conHistory:[]};
+      renderReport(todayData, 'today', false);
+    } else if(period === 'day') {
+      const selDay = daySel.value;
+      const dayData = historyData[selDay] || {counter:0, mgrHistory:[], conHistory:[]};
+      renderReport(dayData, selDay, false);
+    } else {
+      // All days summary
+      renderAllDays();
+    }
+  } catch(e) {
+    document.getElementById('loading').textContent = 'Ошибка загрузки: ' + e.message;
+  }
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function renderReport(data, period, showAllDays) {
+  const mgrH = data.mgrHistory || [];
+  const conH = data.conHistory || [];
+  const total = data.counter || mgrH.length;
+  const contracts = conH.length;
+  const avgMgr = mgrH.length ? Math.round(mgrH.reduce((s,h)=>s+(h.dur||0),0)/mgrH.length) : 0;
+  const avgCon = conH.length ? Math.round(conH.reduce((s,h)=>s+(h.dur||0),0)/conH.length) : 0;
+  const conv = total > 0 ? Math.round(contracts/total*100) : 0;
+
+  document.getElementById('k-total').textContent = total;
+  document.getElementById('k-contracts').textContent = contracts;
+  document.getElementById('k-avgmgr').textContent = avgMgr;
+  document.getElementById('k-avgcon').textContent = avgCon;
+  document.getElementById('k-conv').textContent = conv + '%';
+
+  const dateStr = period === 'today'
+    ? 'Сегодня · ' + new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    : period;
+  document.getElementById('report-date').textContent = dateStr;
+
+  // Managers
+  document.getElementById('mgr-body').innerHTML = MGR_NAMES.map((name,i) => {
+    const rows = mgrH.filter(h=>h.manager===name);
+    const sent = rows.filter(h=>h.sent).length;
+    const avg = rows.length ? Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length) : 0;
+    return `<tr>
+      <td>${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
+      <td style="color:#38bdf8;font-weight:700">${rows.length}</td>
+      <td style="color:#fbbf24;font-weight:700">${sent}</td>
+      <td>${rows.length ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Contract dept
+  document.getElementById('con-body').innerHTML = CON_NAMES.map((name,i) => {
+    const rows = conH.filter(h=>h.name===name||h.desk===CON_DESKS[i]);
+    const avg = rows.length ? Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length) : 0;
+    return `<tr>
+      <td>${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
+      <td style="color:#4ade80;font-weight:700">${rows.length}</td>
+      <td>${rows.length ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // History
+  document.getElementById('hist-body').innerHTML = mgrH.length === 0
+    ? '<tr><td colspan="6" style="text-align:center;color:#475569;padding:20px">Нет данных</td></tr>'
+    : mgrH.slice(0,100).map(h=>`<tr>
+      <td style="color:#c9a96e;font-weight:700">${h.ticket}</td>
+      <td>${h.manager||''}</td>
+      <td>${h.desk||''}</td>
+      <td>${h.dur!=null?h.dur+'м':'—'}</td>
+      <td>${h.sent?'<span class="badge b-blue">Договор</span>':'<span class="badge b-green">Завершён</span>'}</td>
+      <td style="color:#475569">${h.time||''}</td>
+    </tr>`).join('');
+
+  document.getElementById('all-days-section').style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('report-content').style.display = 'block';
+}
+
+function renderAllDays() {
+  const days = Object.keys(historyData).sort().reverse();
+
+  // Overall totals
+  let totalClients=0, totalContracts=0, totalMgrDur=0, mgrCount=0;
+  days.forEach(d => {
+    const data = historyData[d];
+    totalClients += data.counter || (data.mgrHistory||[]).length;
+    totalContracts += (data.conHistory||[]).length;
+    (data.mgrHistory||[]).forEach(h => { totalMgrDur += h.dur||0; mgrCount++; });
+  });
+
+  document.getElementById('k-total').textContent = totalClients;
+  document.getElementById('k-contracts').textContent = totalContracts;
+  document.getElementById('k-avgmgr').textContent = mgrCount ? Math.round(totalMgrDur/mgrCount) : 0;
+  document.getElementById('k-avgcon').textContent = '—';
+  document.getElementById('k-conv').textContent = totalClients > 0 ? Math.round(totalContracts/totalClients*100)+'%' : '0%';
+  document.getElementById('report-date').textContent = `Общая статистика · ${days.length} дней`;
+
+  // Days table
+  document.getElementById('days-body').innerHTML = days.map(d => {
+    const data = historyData[d];
+    const cl = data.counter || (data.mgrHistory||[]).length;
+    const co = (data.conHistory||[]).length;
+    const conv = cl > 0 ? Math.round(co/cl*100) : 0;
+    const mh = data.mgrHistory||[];
+    const avg = mh.length ? Math.round(mh.reduce((s,h)=>s+(h.dur||0),0)/mh.length) : 0;
+    return `<tr>
+      <td>${d}</td>
+      <td style="color:#38bdf8;font-weight:700">${cl}</td>
+      <td style="color:#4ade80;font-weight:700">${co}</td>
+      <td>${conv}%</td>
+      <td>${avg ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:#475569;padding:20px">Нет данных</td></tr>';
+
+  // Manager totals across all days
+  document.getElementById('mgr-body').innerHTML = MGR_NAMES.map((name,i) => {
+    let rows=[], sent=0, dur=0;
+    days.forEach(d => {
+      const mh = historyData[d].mgrHistory||[];
+      const r = mh.filter(h=>h.manager===name);
+      rows = rows.concat(r);
+      sent += r.filter(h=>h.sent).length;
+      r.forEach(h=>dur+=h.dur||0);
+    });
+    const avg = rows.length ? Math.round(dur/rows.length) : 0;
+    return `<tr>
+      <td>${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
+      <td style="color:#38bdf8;font-weight:700">${rows.length}</td>
+      <td style="color:#fbbf24;font-weight:700">${sent}</td>
+      <td>${rows.length ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('con-body').innerHTML = CON_NAMES.map((name,i) => {
+    let rows=[], dur=0;
+    days.forEach(d => {
+      const ch = historyData[d].conHistory||[];
+      const r = ch.filter(h=>h.name===name||h.desk===CON_DESKS[i]);
+      rows = rows.concat(r);
+      r.forEach(h=>dur+=h.dur||0);
+    });
+    const avg = rows.length ? Math.round(dur/rows.length) : 0;
+    return `<tr>
+      <td>${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
+      <td style="color:#4ade80;font-weight:700">${rows.length}</td>
+      <td>${rows.length ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('hist-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#475569;padding:20px">Выберите конкретный день для истории клиентов</td></tr>';
+
+  document.getElementById('all-days-section').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('report-content').style.display = 'block';
+}
+</script>
+</body></html>
