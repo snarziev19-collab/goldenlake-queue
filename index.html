@@ -141,7 +141,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 </div>
 
 <!-- KIOSK -->
-<div id="v-kiosk" class="view active" style="padding:0;height:calc(100vh - 50px)">
+<div id="v-kiosk" class="view active" style="padding:0">
   <div id="kiosk-wrap" style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;border-radius:0">
     <img id="kiosk-bg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity 1s" src="" alt="">
     <div style="position:absolute;inset:0;background:rgba(8,13,26,0.65)"></div>
@@ -219,7 +219,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 </div>
 
 <!-- SCREEN 1 -->
-<div id="v-screen1" class="view" style="padding:0;height:calc(100vh - 50px)">
+<div id="v-screen1" class="view" style="padding:0">
   <div class="screen">
     <div class="shdr s1h"><span class="szone s1z">ОЧЕРЕДЬ К МЕНЕДЖЕРУ <span style="font-size:14px;opacity:0.7;font-weight:400">/ MENEJERGA NAVBAT</span></span><span class="stime" id="s1-time"></span></div>
     <div class="sdiv s1d"></div>
@@ -256,7 +256,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 </div>
 
 <!-- SCREEN 2 -->
-<div id="v-screen2" class="view" style="padding:0;height:calc(100vh - 50px)">
+<div id="v-screen2" class="view" style="padding:0">
   <div class="screen">
     <div class="shdr s2h"><span class="szone s2z">ПОЛУЧЕНИЕ ДОГОВОРА <span style="font-size:14px;opacity:0.7;font-weight:400">/ SHARTNOMA OLISH</span></span><span class="stime" id="s2-time"></span></div>
     <div class="sdiv s2d"></div>
@@ -517,149 +517,17 @@ function clientSigned(){
 
 function sw(tab){
   const ids=['kiosk','manager','contract','screen1','screen2','admin','report'];
-  // Hide all views
   ids.forEach(id => {
     const el = document.getElementById('v-'+id);
-    if(el){ el.style.display = (id===tab) ? 'block' : 'none'; }
+    if(el) el.classList.toggle('active', id===tab);
   });
-  // Update tab buttons
   document.querySelectorAll('.tab').forEach(btn => {
     const onclick = btn.getAttribute('onclick') || '';
-    const isActive = onclick.includes("sw('"+tab+"')") || 
-                     onclick.includes('sw(\"'+tab+'\")')  ||
-                     (tab==='report' && onclick.includes('openReport'));
-    btn.classList.toggle('active', isActive);
+    const isThis = onclick.includes("sw('"+tab+"')") || 
+                   (tab==='report' && onclick.includes('openReport'));
+    btn.classList.toggle('active', isThis);
   });
   if(tab==='report') renderReport();
-}
-
-function render(){
-  const mid=+document.getElementById('mgr-sel').value;
-  const cid=+document.getElementById('con-sel').value;
-  const queue=state.queue||[];
-  const mgrS=state.mgrServing||{};
-  const conS=state.conServing||{};
-  const conQ=state.conQueue||[];
-  const mgrH=state.mgrHistory||[];
-  const conH=state.conHistory||[];
-  const lastMgr=state.lastMgr||null;
-  const lastCon=state.lastCon||null;
-  const mCur=mgrS[mid];const cCur=conS[cid];
-  document.getElementById('k-wait').textContent=queue.length;
-  // Show last issued ticket number on kiosk
-  if(state.counter>0){
-    const lastTicket='A'+String(state.counter).padStart(3,'0');
-    const klast=document.getElementById('kiosk-last');
-    if(klast){
-      klast.innerHTML='<div style="margin-top:1.5rem"><span style="font-size:48px;font-weight:700;color:#c9a96e">'+lastTicket+'</span><br><span style="font-size:16px;color:#94a3b8;margin-top:8px;display:block">Номерок выдан · ожидайте вызова на экране</span><br><span style="font-size:14px;color:#64748b;display:block;margin-top:4px">Raqamcha berildi · ekrandagi chaqiruvni kuting</span></div>';
-    }
-    if(state.counter > lastShownTicket){
-      lastShownTicket = state.counter;
-      const activeTab = document.querySelector('.tab.active');
-      if(activeTab && activeTab.textContent.includes('Стойка')) showFlash(lastTicket);
-    }
-  }
-  document.getElementById('k-free').textContent=MGR_DESKS.filter((_,i)=>!mgrS[i]).length;
-  document.getElementById('mgr-cur').textContent=mCur?mCur.ticket:'—';
-  document.getElementById('mgr-st').textContent=mCur?'Клиент у стола':'Нет клиента';
-  document.getElementById('mgr-timer').textContent=mCur?'Время: '+elapsed(mCur.startTs):'';
-  document.getElementById('btn-nxt').disabled=!!mCur||queue.length===0;
-  document.getElementById('btn-done').disabled=!mCur;
-  document.getElementById('send-block').style.display=mCur?'block':'none';
-  const mh=mgrH.filter(h=>h.manager===MGR_NAMES[mid]);
-  document.getElementById('mgr-hist').innerHTML=mh.length===0?'<p style="font-size:12px;color:#475569">Пока пусто</p>':mh.slice(0,8).map(h=>'<div class="hi"><span class="hn">'+h.ticket+'</span><span style="flex:1">'+h.desk+'</span><span style="font-size:10px;margin-right:6px">'+h.dur+'м</span>'+(h.sent?'<span class="badge b-info">Договорной</span>':'<span class="badge b-ok">Готово</span>')+'<span style="margin-left:6px">'+h.time+'</span></div>').join('');
-  document.getElementById('con-incoming').innerHTML=conQ.length===0?'<p style="font-size:12px;color:#475569;margin-bottom:8px">Нет заявок</p>':conQ.map(q=>'<div class="qi"><span class="qn">'+q.ticket+'</span><span style="font-size:12px;flex:1">'+q.contractNum+' · '+q.apt+'</span><span style="font-size:10px;color:#475569">'+q.from+'</span></div>').join('');
-  document.getElementById('con-cur').textContent=cCur?cCur.ticket:'—';
-  document.getElementById('con-timer').textContent=cCur?'Время: '+elapsed(cCur.startTs):'';
-  document.getElementById('con-info').textContent=cCur?'Договор: '+cCur.contractNum+' · Кв. '+cCur.apt:'';
-  document.getElementById('btn-take').disabled=!!cCur||conQ.length===0;
-  const rb=document.getElementById('btn-ready');
-  if(cCur&&cCur.status==='ready'){rb.textContent='Клиент подписал';rb.className='btn btn-s';rb.onclick=clientSigned;rb.disabled=false;}
-  else{rb.textContent='Договор готов';rb.className='btn btn-s';rb.onclick=markReady;rb.disabled=!cCur;}
-  document.getElementById('con-hist').innerHTML=conH.length===0?'<p style="font-size:12px;color:#475569">Пока пусто</p>':conH.slice(0,8).map(h=>'<div class="hi"><span class="hn">'+h.ticket+'</span><span style="flex:1">'+h.contractNum+'</span><span style="font-size:10px;margin-right:6px">'+h.dur+'м</span><span class="badge b-ok">Подписан</span><span style="margin-left:6px">'+h.time+'</span></div>').join('');
-  const lm=lastMgr;
-  const newMgrTicket = lm ? lm.ticket : null;
-  if(newMgrTicket && newMgrTicket !== lastMgrTicket) {
-    const activeTab = document.querySelector('.tab.active');
-    if(activeTab && activeTab.textContent.includes('Экран 1')) playDing();
-    lastMgrTicket = newMgrTicket;
-  }
-  document.getElementById('s1-ticket').textContent=lm?lm.ticket:'—';
-  document.getElementById('s1-desk').textContent=lm?lm.desk:'';
-  document.getElementById('s1-mgr').textContent=lm?'Менеджер: '+lm.manager:'';
-  document.getElementById('s1-qcount').textContent=queue.length;
-  document.getElementById('s1-recent').innerHTML=mgrH.slice(0,3).map(h=>'<div class="cri"><span class="crn">'+h.ticket+'</span><span class="crd">'+h.desk+'</span></div>').join('')||'<div style="color:#334155;font-size:10px">нет вызовов</div>';
-  document.getElementById('s1-desks').innerHTML=MGR_DESKS.map((d,i)=>{const s=mgrS[i];return'<div class="d1c'+(s?' busy':'')+'"><div class="d1t">'+d+'</div><div class="d1n">'+(s?s.ticket:'—')+'</div><div class="d1nm">'+(s?MGR_NAMES[i]:'свободен')+'</div></div>';}).join('');
-  const lc=lastCon;
-  const newConTicket = lc ? lc.ticket : null;
-  if(newConTicket && newConTicket !== lastConTicket) {
-    const activeTab2 = document.querySelector('.tab.active');
-    if(activeTab2 && activeTab2.textContent.includes('Экран 2')) playDing();
-    lastConTicket = newConTicket;
-  }
-  document.getElementById('s2-ticket').textContent=lc?lc.ticket:'—';
-  document.getElementById('s2-desk').textContent=lc?lc.desk:'';
-  document.getElementById('s2-contract').textContent=lc?'Договор '+lc.contractNum+' / Shartnoma '+lc.contractNum:'';
-  const s2st=document.getElementById('s2-status');
-  if(s2st)s2st.innerHTML=lc?'<span style="color:#4ade80;font-weight:600">ГОТОВ / TAYYOR</span>':'';
-  document.getElementById('s2-desks').innerHTML=CON_DESKS.map((d,i)=>{const s=conS[i];const cls=s?(s.status==='ready'?' rdy':' prep'):'';const st=s?(s.status==='ready'?'ГОТОВ':'готовится'):'свободен';return'<div class="d2c'+cls+'"><div class="d2t">'+d+'</div><div class="d2n">'+(s?s.ticket:'—')+'</div><div class="d2st">'+st+'</div></div>';}).join('');
-  document.getElementById('s2-recent').innerHTML=conH.slice(0,3).map(h=>'<div class="d2r"><div class="d2rn">'+h.ticket+'</div><div class="d2rd">'+h.desk+' · '+h.time+'</div></div>').join('')||'<p style="color:#334155;font-size:11px">пока нет</p>';
-  document.getElementById('a-wait').textContent=queue.length;
-  document.getElementById('a-mgr-busy').textContent=Object.keys(mgrS).length;
-  document.getElementById('a-con-prep').textContent=Object.keys(conS).length;
-  document.getElementById('a-served').textContent=conH.length;
-  document.getElementById('a-mgr-grid').innerHTML=MGR_DESKS.map((d,i)=>{
-    const s=mgrS[i];const isAlert=s&&(Date.now()-s.startTs)/60000>40;
-    const tc=s?tCls(s.startTs,20,40):'tok';
-    return'<div class="ac'+(s?(isAlert?' alrt':' busy'):'')+'"><div class="an">'+d+'</div><div class="av">'+(s?s.ticket:'—')+'</div><div class="as">'+MGR_NAMES[i]+'</div>'+(s?'<div class="at '+tc+'">'+elapsed(s.startTs)+'</div>':'')+'<div style="margin-top:3px">'+(s?(isAlert?'<span class="badge b-danger">Долго!</span>':'<span class="badge b-ok">Занят</span>'):'<span class="badge b-free">Свободен</span>')+'</div></div>';
-  }).join('');
-  document.getElementById('a-con-grid').innerHTML=CON_DESKS.map((d,i)=>{
-    const s=conS[i];const isAlert=s&&(Date.now()-s.startTs)/60000>15;
-    const tc=s?tCls(s.startTs,10,15):'tok';
-    const cls=s?(s.status==='ready'?' rdy':(isAlert?' alrt':' prep')):'';
-    const badge=s?(s.status==='ready'?'<span class="badge b-ready">Готов</span>':(isAlert?'<span class="badge b-danger">Задержка!</span>':'<span class="badge b-prep">Готовится</span>')):'<span class="badge b-free">Свободен</span>';
-    return'<div class="ac'+cls+'"><div class="an">'+d+'</div><div class="av" style="color:'+(s?(s.status==='ready'?'#4ade80':'#fbbf24'):'#38bdf8')+'">'+(s?s.ticket:'—')+'</div><div class="as">'+CON_NAMES[i]+'</div>'+(s?'<div class="at '+tc+'">'+elapsed(s.startTs)+'</div>':'')+'<div style="margin-top:3px">'+badge+'</div></div>';
-  }).join('');
-  document.getElementById('a-queue').innerHTML=queue.length===0?'<p style="font-size:12px;color:#475569">Пусто</p>':queue.map((item,i)=>{const t=item.ticket||item;const wt=item.addedTs?Math.floor((Date.now()-item.addedTs)/60000):0;const wCls=wt>15?'tal':wt>7?'twn':'tok';return'<div class="qi"><span class="qn">'+t+'</span><span style="font-size:11px;color:#475569">Позиция '+(i+1)+'</span><span style="margin-left:auto;margin-right:10px;font-size:12px;font-weight:600" class="'+wCls+'">'+(item.addedTs?'Ждёт: '+wt+'м':'')+'</span><span class="badge b-wait">Ожидает</span></div>';}).join('');
-  document.getElementById('a-con-incoming').innerHTML=conQ.length===0?'<p style="font-size:12px;color:#475569">Нет</p>':conQ.map(q=>'<div class="qi"><span class="qn">'+q.ticket+'</span><span style="font-size:11px;flex:1">'+q.contractNum+' · '+q.apt+'</span><span style="font-size:10px;color:#475569">'+q.from+' · '+q.time+'</span></div>').join('');
-}
-
-// Init images after DOM ready
-window.addEventListener('load', function(){
-  document.getElementById('kiosk-logo').src = LOGO;
-  document.getElementById('kiosk-bg').src = BG_SLIDES[0];
-  document.getElementById('sad-logo-1').src = LOGO;
-  document.getElementById('sad-logo-2').src = LOGO;
-  document.getElementById('sad-slide-1').src = SLIDES[0];
-  document.getElementById('sad-slide-2').src = SLIDES[1];
-});
-
-// Slideshows
-let si=0, bi=0;
-setInterval(function(){
-  si=(si+1)%SLIDES.length;
-  const s1=document.getElementById('sad-slide-1');
-  const s2=document.getElementById('sad-slide-2');
-  if(s1)s1.src=SLIDES[si];
-  if(s2)s2.src=SLIDES[(si+2)%SLIDES.length];
-}, 4000);
-setInterval(function(){
-  bi=(bi+1)%BG_SLIDES.length;
-  const bg=document.getElementById('kiosk-bg');
-  if(bg){bg.style.opacity='0';setTimeout(function(){bg.src=BG_SLIDES[bi];bg.style.opacity='1';},600);}
-}, 5000);
-
-
-const REP_PASS = 'taqdimot08/05';
-let repUnlocked = false;
-let repHistoryCache = null;
-
-function openReport() {
-  sw('report');
-  if(!repUnlocked) {
-    document.getElementById('rep-lock').style.display = 'flex';
-    document.getElementById('rep-content').style.display = 'none';
-  }
 }
 
 function checkPass() {
@@ -794,7 +662,6 @@ function tick(){
 }
 setInterval(tick,1000);
 render();
-sw('kiosk');
 setInterval(()=>{ const t=document.querySelector('.tab.active'); if(t&&t.textContent.includes('Отчёт'))renderReport(); },5000);
 </script>
 <div id="ws-status" style="position:fixed;bottom:8px;right:8px;font-size:11px;color:#f87171;z-index:999"></div>
