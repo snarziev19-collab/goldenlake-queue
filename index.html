@@ -517,9 +517,16 @@ function clientSigned(){
 
 function sw(tab){
   const ids=['kiosk','manager','contract','screen1','screen2','admin','report'];
-  ids.forEach((id,i)=>{
-    document.querySelectorAll('.tab')[i].classList.toggle('active',id===tab);
-    document.getElementById('v-'+id).classList.toggle('active',id===tab);
+  // Match tabs by their onclick attribute content
+  document.querySelectorAll('.tab').forEach(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    const isActive = onclick.includes("'"+tab+"'") || onclick.includes('"'+tab+'"') || 
+                     (tab==='report' && onclick.includes('openReport'));
+    btn.classList.toggle('active', isActive);
+  });
+  ids.forEach(id => {
+    const el = document.getElementById('v-'+id);
+    if(el) el.classList.toggle('active', id===tab);
   });
   if(tab==='report')renderReport();
 }
