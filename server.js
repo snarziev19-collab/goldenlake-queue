@@ -41,20 +41,26 @@ function saveHistory() {
 }
 
 function defaultState() {
+  const now = new Date();
+  const tashkent = new Date(now.getTime() + 5 * 60 * 60 * 1000);
   return {
     counter: 0, queue: [], mgrServing: {}, conServing: {},
     conQueue: [], mgrHistory: [], conHistory: [],
-    lastMgr: null, lastCon: null, date: new Date().toDateString()
+    lastMgr: null, lastCon: null, date: tashkent.toDateString()
   };
 }
 
 function todayKey() {
-  const d = new Date();
+  const now = new Date();
+  const d = new Date(now.getTime() + 5 * 60 * 60 * 1000);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function checkDayReset() {
-  const today = new Date().toDateString();
+  // Use Tashkent time (UTC+5)
+  const now = new Date();
+  const tashkent = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+  const today = tashkent.toDateString();
   if (state.date !== today) {
     // Save today's data to history before reset
     const key = todayKey();
