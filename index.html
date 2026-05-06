@@ -318,6 +318,40 @@ function send(type, payload={}) {
 }
 
 connect();
+
+// ── Sound ────────────────────────────────────────────────────
+function playDing() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // First tone
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.frequency.setValueAtTime(880, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.3);
+    gain1.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.8);
+
+    // Second tone (echo)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+    osc2.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+    osc2.start(ctx.currentTime + 0.15);
+    osc2.stop(ctx.currentTime + 1.0);
+  } catch(e) { console.log('Sound error:', e); }
+}
+
+let lastMgrTicket = null;
+let lastConTicket = null;
 const LOGO=document.getElementById('_logo').src;
 const SLIDES=Array.from(document.querySelectorAll('._slide')).map(e=>e.src);
 const BG_SLIDES=Array.from(document.querySelectorAll('._bg')).map(e=>e.src);
@@ -427,6 +461,12 @@ function render(){
   else{rb.textContent='Договор готов';rb.className='btn btn-s';rb.onclick=markReady;rb.disabled=!cCur;}
   document.getElementById('con-hist').innerHTML=conH.length===0?'<p style="font-size:12px;color:#475569">Пока пусто</p>':conH.slice(0,8).map(h=>'<div class="hi"><span class="hn">'+h.ticket+'</span><span style="flex:1">'+h.contractNum+'</span><span style="font-size:10px;margin-right:6px">'+h.dur+'м</span><span class="badge b-ok">Подписан</span><span style="margin-left:6px">'+h.time+'</span></div>').join('');
   const lm=lastMgr;
+  const newMgrTicket = lm ? lm.ticket : null;
+  if(newMgrTicket && newMgrTicket !== lastMgrTicket) {
+    const activeTab = document.querySelector('.tab.active');
+    if(activeTab && activeTab.textContent.includes('Экран 1')) playDing();
+    lastMgrTicket = newMgrTicket;
+  }
   document.getElementById('s1-ticket').textContent=lm?lm.ticket:'—';
   document.getElementById('s1-desk').textContent=lm?lm.desk:'';
   document.getElementById('s1-mgr').textContent=lm?'Менеджер: '+lm.manager:'';
@@ -434,6 +474,12 @@ function render(){
   document.getElementById('s1-recent').innerHTML=mgrH.slice(0,3).map(h=>'<div class="cri"><span class="crn">'+h.ticket+'</span><span class="crd">'+h.desk+'</span></div>').join('')||'<div style="color:#334155;font-size:10px">нет вызовов</div>';
   document.getElementById('s1-desks').innerHTML=MGR_DESKS.map((d,i)=>{const s=mgrS[i];return'<div class="d1c'+(s?' busy':'')+'"><div class="d1t">'+d+'</div><div class="d1n">'+(s?s.ticket:'—')+'</div><div class="d1nm">'+(s?MGR_NAMES[i]:'свободен')+'</div></div>';}).join('');
   const lc=lastCon;
+  const newConTicket = lc ? lc.ticket : null;
+  if(newConTicket && newConTicket !== lastConTicket) {
+    const activeTab2 = document.querySelector('.tab.active');
+    if(activeTab2 && activeTab2.textContent.includes('Экран 2')) playDing();
+    lastConTicket = newConTicket;
+  }
   document.getElementById('s2-ticket').textContent=lc?lc.ticket:'—';
   document.getElementById('s2-desk').textContent=lc?lc.desk:'';
   document.getElementById('s2-contract').textContent=lc?'Договор '+lc.contractNum+' / Shartnoma '+lc.contractNum:'';
