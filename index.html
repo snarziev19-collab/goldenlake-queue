@@ -19,7 +19,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 .tabs{display:flex;gap:5px;padding:10px;flex-wrap:wrap;background:#0f172a;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:100;min-height:50px}
 .tab{padding:7px 14px;border-radius:8px;border:1px solid #334155;font-size:12px;cursor:pointer;background:#0f172a;color:#64748b;white-space:nowrap}
 .tab.active{background:#1e3a5f;color:#38bdf8;border-color:#38bdf8;font-weight:600}
-.view{display:none;padding:14px}.view.active{display:block}
+.view{display:none;padding:14px}.view.active{display:block!important;min-height:200px}
 .card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px;margin-bottom:12px}
 .sec{font-size:10px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:13px;cursor:pointer;transition:all .15s}
@@ -307,7 +307,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
   <p class="sec" style="margin-top:12px">Договорной — входящие</p>
   <div id="a-con-incoming"></div>
 
-<div id="v-report" class="view">
+<div id="v-report" class="view" style="padding:14px">
   <!-- Password screen -->
   <div id="rep-lock" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:16px">
     <div style="font-size:24px">🔒</div>
@@ -517,18 +517,20 @@ function clientSigned(){
 
 function sw(tab){
   const ids=['kiosk','manager','contract','screen1','screen2','admin','report'];
-  // Match tabs by their onclick attribute content
+  // Hide all views
+  ids.forEach(id => {
+    const el = document.getElementById('v-'+id);
+    if(el){ el.style.display = (id===tab) ? 'block' : 'none'; }
+  });
+  // Update tab buttons
   document.querySelectorAll('.tab').forEach(btn => {
     const onclick = btn.getAttribute('onclick') || '';
-    const isActive = onclick.includes("'"+tab+"'") || onclick.includes('"'+tab+'"') || 
+    const isActive = onclick.includes("sw('"+tab+"')") || 
+                     onclick.includes('sw(\"'+tab+'\")')  ||
                      (tab==='report' && onclick.includes('openReport'));
     btn.classList.toggle('active', isActive);
   });
-  ids.forEach(id => {
-    const el = document.getElementById('v-'+id);
-    if(el) el.classList.toggle('active', id===tab);
-  });
-  if(tab==='report')renderReport();
+  if(tab==='report') renderReport();
 }
 
 function render(){
@@ -792,6 +794,7 @@ function tick(){
 }
 setInterval(tick,1000);
 render();
+sw('kiosk');
 setInterval(()=>{ const t=document.querySelector('.tab.active'); if(t&&t.textContent.includes('Отчёт'))renderReport(); },5000);
 </script>
 <div id="ws-status" style="position:fixed;bottom:8px;right:8px;font-size:11px;color:#f87171;z-index:999"></div>
