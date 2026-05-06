@@ -11,56 +11,86 @@ const wss = new WebSocketServer({ server });
 app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-// ── Database (simple JSON file) ──────────────────────────────
-const DB_FILE = process.env.DATA_PATH || path.join(__dirname, 'data.json');
+const DATA_DIR = process.env.DATA_PATH ? path.dirname(process.env.DATA_PATH) : __dirname;
+const STATE_FILE = process.env.DATA_PATH || path.join(__dirname, 'data.json');
+const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 
+// Load/save current state
 function loadState() {
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf8');
-      return JSON.parse(raw);
-    }
-  } catch(e) { console.log('DB load error:', e.message); }
+    if (fs.existsSync(STATE_FILE)) return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+  } catch(e) {}
   return defaultState();
 }
 
 function saveState() {
+  try { fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2)); } catch(e) {}
+}
+
+// Load/save history (per day)
+function loadHistory() {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(state, null, 2));
-  } catch(e) { console.log('DB save error:', e.message); }
+    if (fs.existsSync(HISTORY_FILE)) return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+  } catch(e) {}
+  return {};
+}
+
+function saveHistory() {
+  try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2)); } catch(e) {}
 }
 
 function defaultState() {
   return {
-    counter: 0,
-    queue: [],
-    mgrServing: {},
-    conServing: {},
-    conQueue: [],
-    mgrHistory: [],
-    conHistory: [],
-    lastMgr: null,
-    lastCon: null,
-    date: new Date().toDateString()
+    counter: 0, queue: [], mgrServing: {}, conServing: {},
+    conQueue: [], mgrHistory: [], conHistory: [],
+    lastMgr: null, lastCon: null, date: new Date().toDateString()
   };
 }
 
-// Auto-reset at start of new day
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 function checkDayReset() {
   const today = new Date().toDateString();
   if (state.date !== today) {
-    console.log('New day - resetting queue');
+    // Save today's data to history before reset
+    const key = todayKey();
+    history[key] = {
+      date: state.date,
+      counter: state.counter,
+      mgrHistory: state.mgrHistory,
+      conHistory: state.conHistory
+    };
+    saveHistory();
+    console.log(`New day - saved ${key} to history, resetting queue`);
     state = defaultState();
     state.date = today;
     saveState();
+    broadcast({ type: 'state', state });
   }
 }
 
 let state = loadState();
+let history = loadHistory();
 checkDayReset();
-setInterval(checkDayReset, 60 * 1000); // check every minute
+setInterval(checkDayReset, 60 * 1000);
 
-// ── WebSocket ────────────────────────────────────────────────
+// History API endpoint
+app.get('/api/history', (req, res) => {
+  // Also include today
+  const key = todayKey();
+  const all = { ...history };
+  all[key] = {
+    date: new Date().toDateString(),
+    counter: state.counter,
+    mgrHistory: state.mgrHistory,
+    conHistory: state.conHistory
+  };
+  res.json(all);
+});
+
 function broadcast(data) {
   const msg = JSON.stringify(data);
   wss.clients.forEach(c => { if (c.readyState === 1) c.send(msg); });
@@ -80,8 +110,7 @@ function nowStr() {
 function handleAction({ type, payload }) {
   if (type === 'ADD_CLIENT') {
     state.counter++;
-    const ticket = 'A' + String(state.counter).padStart(3, '0');
-    state.queue.push({ ticket, addedTs: Date.now() });
+    state.queue.push({ ticket: 'A'+String(state.counter).padStart(3,'0'), addedTs: Date.now() });
   }
   else if (type === 'NEXT_CLIENT') {
     const { mid, desk, manager } = payload;
@@ -92,19 +121,17 @@ function handleAction({ type, payload }) {
   }
   else if (type === 'DONE_CLIENT') {
     const { mid, desk, manager } = payload;
-    const s = state.mgrServing[mid];
-    if (!s) return;
+    const s = state.mgrServing[mid]; if (!s) return;
     state.mgrHistory.unshift({ ticket: s.ticket, desk, manager, dur: Math.floor((Date.now()-s.startTs)/60000), time: nowStr() });
-    if (state.mgrHistory.length > 200) state.mgrHistory.pop();
+    if (state.mgrHistory.length > 500) state.mgrHistory.pop();
     delete state.mgrServing[mid];
   }
   else if (type === 'SEND_CONTRACT') {
     const { mid, desk, manager, contractNum, apt } = payload;
-    const s = state.mgrServing[mid];
-    if (!s) return;
+    const s = state.mgrServing[mid]; if (!s) return;
     state.conQueue.push({ ticket: s.ticket, contractNum, apt, from: desk, manager, time: nowStr() });
     state.mgrHistory.unshift({ ticket: s.ticket, desk, manager, dur: Math.floor((Date.now()-s.startTs)/60000), contractNum, apt, time: nowStr(), sent: true });
-    if (state.mgrHistory.length > 200) state.mgrHistory.pop();
+    if (state.mgrHistory.length > 500) state.mgrHistory.pop();
     delete state.mgrServing[mid];
   }
   else if (type === 'TAKE_CONTRACT') {
@@ -114,27 +141,25 @@ function handleAction({ type, payload }) {
   }
   else if (type === 'MARK_READY') {
     const { cid, desk } = payload;
-    const s = state.conServing[cid];
-    if (!s) return;
+    const s = state.conServing[cid]; if (!s) return;
     s.status = 'ready';
     state.lastCon = { ticket: s.ticket, desk, contractNum: s.contractNum };
   }
   else if (type === 'CLIENT_SIGNED') {
     const { cid, desk } = payload;
-    const s = state.conServing[cid];
-    if (!s) return;
-    state.conHistory.unshift({ ticket: s.ticket, desk, contractNum: s.contractNum, dur: Math.floor((Date.now()-s.startTs)/60000), time: nowStr() });
-    if (state.conHistory.length > 200) state.conHistory.pop();
+    const s = state.conServing[cid]; if (!s) return;
+    state.conHistory.unshift({ ticket: s.ticket, desk, name: CON_NAMES_SERVER[cid], contractNum: s.contractNum, dur: Math.floor((Date.now()-s.startTs)/60000), time: nowStr() });
+    if (state.conHistory.length > 500) state.conHistory.pop();
     delete state.conServing[cid];
   }
   else if (type === 'RESET') {
-    state = defaultState();
-    state.date = new Date().toDateString();
+    state = defaultState(); state.date = new Date().toDateString();
   }
-
   saveState();
   broadcast({ type: 'state', state });
 }
+
+const CON_NAMES_SERVER = ['Viktoria','Samira','Rayxona','Gulmira','Aziz'];
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Golden Lake Queue running on port ${PORT}`));

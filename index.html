@@ -137,6 +137,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
   <button class="tab" onclick="sw('screen1')">Экран 1 — Менеджеры</button>
   <button class="tab" onclick="sw('screen2')">Экран 2 — Договорной</button>
   <button class="tab" onclick="sw('admin')">Панель управления</button>
+  <button class="tab" onclick="openReport()">📊 Отчёт 🔒</button>
 </div>
 
 <!-- KIOSK -->
@@ -305,6 +306,98 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
   <div id="a-queue"></div>
   <p class="sec" style="margin-top:12px">Договорной — входящие</p>
   <div id="a-con-incoming"></div>
+
+<div id="v-report" class="view">
+  <!-- Password screen -->
+  <div id="rep-lock" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:16px">
+    <div style="font-size:24px">🔒</div>
+    <div style="font-size:16px;color:#94a3b8">Введите пароль для доступа к отчёту</div>
+    <input id="rep-pass" type="password" class="inp" placeholder="Пароль" style="max-width:260px;text-align:center;font-size:16px;padding:12px"
+      onkeydown="if(event.key==='Enter')checkPass()">
+    <button class="btn btn-p" onclick="checkPass()" style="padding:10px 28px;font-size:14px">Войти</button>
+    <div id="rep-err" style="color:#f87171;font-size:13px;display:none">Неверный пароль</div>
+  </div>
+
+  <!-- Report content (hidden until password) -->
+  <div id="rep-content" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#f1f5f9">Отчёт Golden Lake</div>
+        <div style="font-size:12px;color:#475569" id="rep-date"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="sel" id="rep-period" onchange="loadReport()">
+          <option value="today">Сегодня</option>
+          <option value="all">Общий (все дни)</option>
+        </select>
+        <select class="sel" id="rep-day-sel" style="display:none" onchange="loadReport()"></select>
+        <button class="btn" onclick="repLock()" style="font-size:12px">🔒 Выйти</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem">
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-size:32px;font-weight:700;color:#38bdf8" id="rep-total">0</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px">Всего клиентов</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-size:32px;font-weight:700;color:#4ade80" id="rep-contracts">0</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px">Договоров подписано</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-size:32px;font-weight:700;color:#fbbf24" id="rep-avgwait">0</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px">Ср. время с менеджером (мин)</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-size:32px;font-weight:700;color:#c084fc" id="rep-avgcon">0</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px">Ср. время договора (мин)</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div style="font-size:32px;font-weight:700;color:#f87171" id="rep-inqueue">0</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px">Сейчас в очереди</div>
+      </div>
+    </div>
+
+    <p class="sec">Статистика менеджеров</p>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#0f172a;border-bottom:1px solid #1e293b">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569">МЕНЕДЖЕР</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">КЛИЕНТОВ</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">В ДОГОВОРНОЙ</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">СР. ВРЕМЯ</th>
+        </tr></thead>
+        <tbody id="rep-mgr-body"></tbody>
+      </table>
+    </div>
+
+    <p class="sec">Договорной отдел</p>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#0f172a;border-bottom:1px solid #1e293b">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569">СОТРУДНИК</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">ДОГОВОРОВ</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">СР. ВРЕМЯ</th>
+        </tr></thead>
+        <tbody id="rep-con-body"></tbody>
+      </table>
+    </div>
+
+    <p class="sec">История клиентов</p>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#0f172a;border-bottom:1px solid #1e293b">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569">НОМЕР</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569">МЕНЕДЖЕР</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">ВРЕМЯ</th>
+          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#475569">ИТОГ</th>
+          <th style="padding:10px 14px;text-align:right;font-size:11px;color:#475569">ВРЕМЯ</th>
+        </tr></thead>
+        <tbody id="rep-hist-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -423,11 +516,12 @@ function clientSigned(){
 }
 
 function sw(tab){
-  const ids=['kiosk','manager','contract','screen1','screen2','admin'];
+  const ids=['kiosk','manager','contract','screen1','screen2','admin','report'];
   ids.forEach((id,i)=>{
     document.querySelectorAll('.tab')[i].classList.toggle('active',id===tab);
     document.getElementById('v-'+id).classList.toggle('active',id===tab);
   });
+  if(tab==='report')renderReport();
 }
 
 function render(){
@@ -546,6 +640,135 @@ setInterval(function(){
   if(bg){bg.style.opacity='0';setTimeout(function(){bg.src=BG_SLIDES[bi];bg.style.opacity='1';},600);}
 }, 5000);
 
+
+const REP_PASS = 'taqdimot08/05';
+let repUnlocked = false;
+let repHistoryCache = null;
+
+function openReport() {
+  sw('report');
+  if(!repUnlocked) {
+    document.getElementById('rep-lock').style.display = 'flex';
+    document.getElementById('rep-content').style.display = 'none';
+  }
+}
+
+function checkPass() {
+  const val = document.getElementById('rep-pass').value;
+  if(val === REP_PASS) {
+    repUnlocked = true;
+    document.getElementById('rep-lock').style.display = 'none';
+    document.getElementById('rep-content').style.display = 'block';
+    document.getElementById('rep-pass').value = '';
+    document.getElementById('rep-err').style.display = 'none';
+    loadReport();
+  } else {
+    document.getElementById('rep-err').style.display = 'block';
+  }
+}
+
+function repLock() {
+  repUnlocked = false;
+  document.getElementById('rep-lock').style.display = 'flex';
+  document.getElementById('rep-content').style.display = 'none';
+}
+
+async function loadReport() {
+  if(!repUnlocked) return;
+  try {
+    const res = await fetch('/api/history');
+    repHistoryCache = await res.json();
+  } catch(e) { repHistoryCache = {}; }
+
+  const period = document.getElementById('rep-period').value;
+  const daySel = document.getElementById('rep-day-sel');
+
+  if(period === 'all') {
+    // Show day selector
+    daySel.style.display = 'block';
+    const days = Object.keys(repHistoryCache).sort().reverse();
+    if(daySel.options.length === 0 || daySel.dataset.loaded !== '1') {
+      daySel.innerHTML = days.map(d => `<option value="${d}">${d}</option>`).join('');
+      daySel.dataset.loaded = '1';
+    }
+    const selDay = daySel.value || days[0];
+    renderReportData(repHistoryCache[selDay] || {}, selDay);
+  } else {
+    daySel.style.display = 'none';
+    // Today
+    const todayData = {
+      date: new Date().toDateString(),
+      counter: state.counter,
+      mgrHistory: state.mgrHistory || [],
+      conHistory: state.conHistory || []
+    };
+    renderReportData(todayData, 'today');
+  }
+}
+
+function renderReportData(data, period) {
+  const mgrH = data.mgrHistory || [];
+  const conH = data.conHistory || [];
+  const queue = state.queue || [];
+
+  const dateEl = document.getElementById('rep-date');
+  if(dateEl) dateEl.textContent = period === 'today'
+    ? new Date().toLocaleDateString('ru-RU', {weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    : (data.date || period);
+
+  const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('rep-total', data.counter || mgrH.length || 0);
+  set('rep-contracts', conH.length);
+  set('rep-avgwait', mgrH.length ? Math.round(mgrH.reduce((s,h)=>s+(h.dur||0),0)/mgrH.length) : 0);
+  set('rep-avgcon', conH.length ? Math.round(conH.reduce((s,h)=>s+(h.dur||0),0)/conH.length) : 0);
+  set('rep-inqueue', period==='today' ? queue.length : '—');
+
+  // Manager table
+  const mb = document.getElementById('rep-mgr-body');
+  if(mb) mb.innerHTML = MGR_NAMES.map((name,i) => {
+    const rows = mgrH.filter(h => h.manager===name);
+    const sent = rows.filter(h=>h.sent).length;
+    const avg = rows.length ? Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length) : 0;
+    return `<tr style="border-bottom:1px solid #1e293b">
+      <td style="padding:9px 14px;font-size:13px;color:${rows.length?'#f1f5f9':'#475569'}">${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
+      <td style="padding:9px 14px;text-align:center;font-size:18px;font-weight:700;color:#38bdf8">${rows.length}</td>
+      <td style="padding:9px 14px;text-align:center;font-size:18px;font-weight:700;color:#fbbf24">${sent}</td>
+      <td style="padding:9px 14px;text-align:center;font-size:13px;color:#94a3b8">${rows.length ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Contract table
+  const cb = document.getElementById('rep-con-body');
+  if(cb) cb.innerHTML = CON_NAMES.map((name,i) => {
+    const rows = conH.filter(h => h.name===name || h.desk===CON_DESKS[i]);
+    const avg = rows.length ? Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length) : 0;
+    return `<tr style="border-bottom:1px solid #1e293b">
+      <td style="padding:9px 14px;font-size:13px;color:${rows.length?'#f1f5f9':'#475569'}">${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
+      <td style="padding:9px 14px;text-align:center;font-size:18px;font-weight:700;color:#4ade80">${rows.length}</td>
+      <td style="padding:9px 14px;text-align:center;font-size:13px;color:#94a3b8">${rows.length ? avg+'м' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // History
+  const hb = document.getElementById('rep-hist-body');
+  if(hb) {
+    if(!mgrH.length) {
+      hb.innerHTML = '<tr><td colspan="5" style="padding:14px;text-align:center;color:#475569">Нет данных</td></tr>';
+    } else {
+      hb.innerHTML = mgrH.slice(0,100).map(h => `<tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:8px 14px;font-size:14px;font-weight:700;color:#c9a96e">${h.ticket}</td>
+        <td style="padding:8px 14px;font-size:12px;color:#94a3b8">${h.desk||''}<br><span style="color:#475569">${h.manager||''}</span></td>
+        <td style="padding:8px 14px;text-align:center;font-size:13px;color:#94a3b8">${h.dur!=null?h.dur+'м':'—'}</td>
+        <td style="padding:8px 14px;text-align:center">${h.sent?'<span class="badge b-info">Договор</span>':'<span class="badge b-ok">Завершён</span>'}</td>
+        <td style="padding:8px 14px;text-align:right;font-size:12px;color:#475569">${h.time||''}</td>
+      </tr>`).join('');
+    }
+  }
+}
+
+function renderReport() { if(repUnlocked) loadReport(); }
+
+
 function tick(){
   const t=nowStr();
   ['s1-time','s2-time'].forEach(function(id){const e=document.getElementById(id);if(e)e.textContent=t;});
@@ -557,9 +780,12 @@ function tick(){
   if(_cs2[_cid])document.getElementById('con-timer').textContent='Время: '+elapsed(_cs2[_cid].startTs);
   const _ms=state.mgrServing||{};const _cs=state.conServing||{};const _q=state.queue||[];
   if(Object.keys(_ms).length>0||Object.keys(_cs).length>0||_q.length>0)render();
+  const activeTab=document.querySelector('.tab.active');
+  if(activeTab&&activeTab.textContent.includes('Отчёт'))renderReport();
 }
 setInterval(tick,1000);
 render();
+setInterval(()=>{ const t=document.querySelector('.tab.active'); if(t&&t.textContent.includes('Отчёт'))renderReport(); },5000);
 </script>
 <div id="ws-status" style="position:fixed;bottom:8px;right:8px;font-size:11px;color:#f87171;z-index:999"></div>
 
