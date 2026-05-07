@@ -160,6 +160,18 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 
 <!-- MANAGER -->
 <div id="v-manager" class="view">
+  <!-- Desk selection screen -->
+  <div id="mgr-lock" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px">
+    <div style="font-size:48px">👤</div>
+    <div style="font-size:18px;font-weight:600;color:#f1f5f9">Выберите ваш стол</div>
+    <div style="font-size:13px;color:#64748b">Stolingizni tanlang</div>
+    <select class="sel" id="mgr-lock-sel" style="font-size:15px;padding:12px 16px;min-width:260px">
+      <option value="">-- Выберите --</option>
+    </select>
+    <button class="btn btn-p" style="font-size:15px;padding:12px 32px" onclick="confirmMgrDesk()">Подтвердить / Tasdiqlash</button>
+  </div>
+  <!-- Manager work screen (hidden until desk selected) -->
+  <div id="mgr-work" style="display:none">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
     <span style="font-size:13px;color:#64748b">Рабочее место:</span>
     <select class="sel" id="mgr-sel" onchange="render()"><option value="0">Стол 1 — Samir Narziyev</option><option value="1">Стол 2 — Shaxnoza Nabiyeva</option><option value="2">Стол 3 — Gulirana Sulaymanova</option><option value="3">Стол 4 — Burxoniddin Fatiddinov</option><option value="4">Стол 5 — Aziz Maxmudov</option><option value="5">Стол 6 — Javohir Shakirov</option><option value="6">Стол 7 — Ibrohim Maxmudov</option><option value="7">Стол 8 — Gulirux Turopova</option><option value="8">Стол 9 — Shaxlo Umarova</option><option value="9">Стол 10 — Fotima Nabiyeva</option></select>
@@ -188,6 +200,18 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
 
 <!-- CONTRACT -->
 <div id="v-contract" class="view">
+  <!-- Desk selection screen -->
+  <div id="con-lock" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px">
+    <div style="font-size:48px">📋</div>
+    <div style="font-size:18px;font-weight:600;color:#f1f5f9">Выберите ваш стол</div>
+    <div style="font-size:13px;color:#64748b">Stolingizni tanlang</div>
+    <select class="sel" id="con-lock-sel" style="font-size:15px;padding:12px 16px;min-width:260px">
+      <option value="">-- Выберите --</option>
+    </select>
+    <button class="btn btn-p" style="font-size:15px;padding:12px 32px" onclick="confirmConDesk()">Подтвердить / Tasdiqlash</button>
+  </div>
+  <!-- Contract work screen -->
+  <div id="con-work" style="display:none">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
     <span style="font-size:13px;color:#64748b">Рабочее место:</span>
     <select class="sel" id="con-sel" onchange="render()"><option value="0">Стол Д1 — Viktoria</option><option value="1">Стол Д2 — Samira</option><option value="2">Стол Д3 — Rayxona</option><option value="3">Стол Д4 — Gulmira</option><option value="4">Стол Д5 — Aziz</option></select>
@@ -428,6 +452,8 @@ function clientSigned(){
 }
 
 function sw(tab){
+  if(tab==='manager') setTimeout(initMgrLock, 100);
+  if(tab==='contract') setTimeout(initConLock, 100);
   const ids=['kiosk','manager','contract','screen1','screen2','admin'];
   ids.forEach((id,i)=>{
     document.querySelectorAll('.tab')[i].classList.toggle('active',id===tab);
@@ -569,6 +595,85 @@ function tick(){
 }
 setInterval(tick,1000);
 render();
+
+
+// ── Desk lock for manager ─────────────────────────
+
+function initConLock() {
+  const sel = document.getElementById('con-lock-sel');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">-- Выберите --</option>' +
+    CON_NAMES.map((name,i) => `<option value="${i}">${CON_DESKS[i]} — ${name}</option>`).join('');
+  const saved = sessionStorage.getItem('con-desk');
+  if(saved !== null) applyConDesk(parseInt(saved));
+}
+
+function confirmConDesk() {
+  const sel = document.getElementById('con-lock-sel');
+  const val = sel.value;
+  if(val === '') return;
+  sessionStorage.setItem('con-desk', val);
+  applyConDesk(parseInt(val));
+}
+
+function applyConDesk(deskIdx) {
+  const conSel = document.getElementById('con-sel');
+  if(conSel) conSel.value = deskIdx;
+  document.getElementById('con-lock').style.display = 'none';
+  document.getElementById('con-work').style.display = 'block';
+  render();
+}
+
+function initMgrLock() {
+  // Populate lock select with manager names
+  const sel = document.getElementById('mgr-lock-sel');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">-- Выберите --</option>' +
+    MGR_NAMES.map((name,i) => `<option value="${i}">${MGR_DESKS[i]} — ${name}</option>`).join('');
+  
+  // Check if already selected in sessionStorage
+  const saved = sessionStorage.getItem('mgr-desk');
+  if(saved !== null) {
+    applyMgrDesk(parseInt(saved));
+  }
+}
+
+function confirmMgrDesk() {
+  const sel = document.getElementById('mgr-lock-sel');
+  const val = sel.value;
+  if(val === '') return;
+  sessionStorage.setItem('mgr-desk', val);
+  applyMgrDesk(parseInt(val));
+}
+
+function applyMgrDesk(deskIdx) {
+  // Set the select
+  const mgrSel = document.getElementById('mgr-sel');
+  if(mgrSel) mgrSel.value = deskIdx;
+  // Show work screen, hide lock
+  document.getElementById('mgr-lock').style.display = 'none';
+  document.getElementById('mgr-work').style.display = 'block';
+  render();
+}
+
+// ── URL параметр для скрытия вкладок ─────────────
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  if(tab) {
+    // Hide all tabs and show only the needed one
+    document.querySelectorAll('.tab').forEach(btn => {
+      const onclick = btn.getAttribute('onclick') || '';
+      const isThis = onclick.includes("sw('"+tab+"')") ||
+                     onclick.includes("sw(\""+tab+"\")") ||
+                     (tab==='report' && onclick.includes('openReport'));
+      btn.style.display = isThis ? '' : 'none';
+    });
+    // Switch to the tab
+    sw(tab);
+  }
+})();
+
 </script>
 <div id="ws-status" style="position:fixed;bottom:8px;right:8px;font-size:11px;color:#f87171;z-index:999"></div>
 
