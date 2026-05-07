@@ -2,138 +2,169 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Golden Lake — Отчёт</title>
+<title>Golden Lake — Управление</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-height:100vh}
 .lock{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
-.lock h2{font-size:20px;color:#94a3b8}
-.lock input{padding:12px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:16px;width:260px;text-align:center}
-.lock button{padding:10px 28px;border-radius:8px;background:#1e3a5f;color:#38bdf8;border:1px solid #38bdf8;font-size:14px;cursor:pointer}
-.lock .err{color:#f87171;font-size:13px;display:none}
-.wrap{padding:20px;max-width:1200px;margin:0 auto}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
-.header h1{font-size:22px;font-weight:700}
-.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-select,button{padding:8px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:13px;cursor:pointer}
+.lock h2{font-size:18px;color:#94a3b8}
+input{padding:10px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:14px;width:100%}
+button{padding:10px 18px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:13px;cursor:pointer;transition:all .15s}
+button:hover{background:#1e293b}
+.btn-p{background:#1e3a5f;color:#38bdf8;border-color:#38bdf8}
+.btn-r{background:#3d0f0f;color:#f87171;border-color:#f87171}
+.btn-g{background:#0f3d23;color:#4ade80;border-color:#4ade80}
+.err{color:#f87171;font-size:13px;display:none}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+.tabs{display:flex;gap:6px;background:#0a0f1e;padding:10px 20px;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:10}
+.tab{padding:8px 18px;border-radius:8px;border:1px solid #1e293b;background:transparent;color:#64748b;font-size:13px;cursor:pointer}
+.tab.active{background:#1e3a5f;color:#38bdf8;border-color:#38bdf8}
+.view{display:none}.view.active{display:block}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px;margin-bottom:16px}
+.card h3{font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
 .kpi{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center}
-.kpi-v{font-size:30px;font-weight:700}
-.kpi-l{font-size:11px;color:#475569;margin-top:4px}
+.kpi-v{font-size:30px;font-weight:700}.kpi-l{font-size:11px;color:#475569;margin-top:4px}
 .c-blue{color:#38bdf8}.c-green{color:#4ade80}.c-yellow{color:#fbbf24}.c-purple{color:#c084fc}.c-red{color:#f87171}
 .sec{font-size:11px;font-weight:600;color:#475569;letter-spacing:.06em;text-transform:uppercase;margin:20px 0 10px}
 table{width:100%;border-collapse:collapse;background:#0f172a;border-radius:10px;overflow:hidden;margin-bottom:20px}
 th{padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;background:#0a0f1e;border-bottom:1px solid #1e293b}
 td{padding:9px 14px;font-size:13px;border-bottom:1px solid #1e293b;color:#94a3b8}
-td:first-child{color:#f1f5f9;font-weight:500}
+td:first-child{color:#f1f5f9}
 .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
-.b-blue{background:#1e3a5f;color:#38bdf8}
-.b-green{background:#0f3d23;color:#4ade80}
-.days-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-.day-btn{padding:5px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#64748b;font-size:12px;cursor:pointer}
-.day-btn.active{background:#1e3a5f;color:#38bdf8;border-color:#38bdf8}
+.b-blue{background:#1e3a5f;color:#38bdf8}.b-green{background:#0f3d23;color:#4ade80}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:#475569}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+select{padding:8px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:13px;cursor:pointer}
 .loading{text-align:center;color:#475569;padding:40px}
+.toast{position:fixed;bottom:20px;right:20px;background:#0f3d23;color:#4ade80;border:1px solid #4ade80;padding:10px 18px;border-radius:8px;font-size:13px;display:none;z-index:999}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;padding-top:4px}
 </style>
 </head><body>
 
 <!-- Lock screen -->
 <div class="lock" id="lock-screen">
-  <div style="font-size:32px">🔒</div>
-  <h2>Golden Lake — Отчёт руководителя</h2>
-  <input type="password" id="pass-input" placeholder="Введите пароль" onkeydown="if(event.key==='Enter')checkPass()">
-  <button onclick="checkPass()">Войти</button>
+  <div style="font-size:36px">🔒</div>
+  <h2>Golden Lake — Панель управления</h2>
+  <input type="password" id="pass-input" placeholder="Введите пароль" style="max-width:260px;text-align:center" onkeydown="if(event.key==='Enter')checkPass()">
+  <button class="btn-p" onclick="checkPass()">Войти</button>
   <div class="err" id="pass-err">Неверный пароль</div>
 </div>
 
-<!-- Report -->
-<div id="report-screen" style="display:none">
-  <div class="wrap">
-    <div class="header">
-      <div>
-        <h1>📊 Отчёт Golden Lake</h1>
-        <div id="report-date" style="font-size:12px;color:#475569;margin-top:4px"></div>
-      </div>
-      <div class="controls">
-        <select id="period-sel" onchange="onPeriodChange()">
-          <option value="today">Сегодня</option>
-          <option value="day">Выбрать день</option>
-          <option value="all">Все дни (сводка)</option>
-        </select>
-        <div id="day-picker" style="display:none">
-          <select id="day-sel" onchange="loadReport()"></select>
+<!-- Main panel -->
+<div id="main-screen" style="display:none">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('report')">📊 Отчёт</button>
+    <button class="tab" onclick="switchTab('admin')">⚙️ Администратор</button>
+    <button onclick="doLock()" style="margin-left:auto">🔒 Выйти</button>
+    <a href="/" style="padding:10px 18px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#64748b;font-size:13px;text-decoration:none">← На сайт</a>
+  </div>
+
+  <!-- REPORT TAB -->
+  <div id="v-report" class="view active">
+    <div class="wrap">
+      <div class="header">
+        <div>
+          <div style="font-size:20px;font-weight:700">Отчёт Golden Lake</div>
+          <div id="report-date" style="font-size:12px;color:#475569;margin-top:4px"></div>
         </div>
-        <button onclick="loadReport()">🔄 Обновить</button>
-        <button onclick="doLock()">Выйти</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="period-sel" onchange="onPeriodChange()">
+            <option value="today">Сегодня</option>
+            <option value="day">Выбрать день</option>
+            <option value="all">Все дни (сводка)</option>
+          </select>
+          <select id="day-sel" style="display:none" onchange="loadReport()"></select>
+          <button onclick="loadReport()">🔄 Обновить</button>
+        </div>
+      </div>
+
+      <div class="loading" id="rep-loading">Загрузка...</div>
+      <div id="rep-content" style="display:none">
+        <div class="kpis">
+          <div class="kpi"><div class="kpi-v c-blue" id="k-total">0</div><div class="kpi-l">Всего клиентов</div></div>
+          <div class="kpi"><div class="kpi-v c-green" id="k-contracts">0</div><div class="kpi-l">Договоров</div></div>
+          <div class="kpi"><div class="kpi-v c-yellow" id="k-avgmgr">0</div><div class="kpi-l">Ср. время менеджер (мин)</div></div>
+          <div class="kpi"><div class="kpi-v c-purple" id="k-avgcon">0</div><div class="kpi-l">Ср. время договор (мин)</div></div>
+          <div class="kpi"><div class="kpi-v c-red" id="k-conv">0%</div><div class="kpi-l">Конверсия</div></div>
+        </div>
+
+        <div id="all-days-section" style="display:none">
+          <div class="sec">По дням</div>
+          <table><thead><tr>
+            <th>Дата</th><th>Клиентов</th><th>Договоров</th><th>Конверсия</th><th>Ср. время (мин)</th>
+          </tr></thead><tbody id="days-body"></tbody></table>
+        </div>
+
+        <div class="sec">Менеджеры</div>
+        <table><thead><tr>
+          <th>Менеджер</th><th>Клиентов</th><th>В договорной</th><th>Ср. время</th>
+        </tr></thead><tbody id="mgr-body"></tbody></table>
+
+        <div class="sec">Договорной отдел</div>
+        <table><thead><tr>
+          <th>Сотрудник</th><th>Договоров</th><th>Ср. время</th>
+        </tr></thead><tbody id="con-body"></tbody></table>
+
+        <div class="sec">История клиентов</div>
+        <table><thead><tr>
+          <th>Номер</th><th>Менеджер</th><th>Стол</th><th>Время (мин)</th><th>Итог</th><th>Время</th>
+        </tr></thead><tbody id="hist-body"></tbody></table>
       </div>
     </div>
+  </div>
 
-    <div class="loading" id="loading">Загрузка...</div>
-
-    <div id="report-content" style="display:none">
-      <!-- KPIs -->
-      <div class="kpis">
-        <div class="kpi"><div class="kpi-v c-blue" id="k-total">0</div><div class="kpi-l">Всего клиентов</div></div>
-        <div class="kpi"><div class="kpi-v c-green" id="k-contracts">0</div><div class="kpi-l">Договоров подписано</div></div>
-        <div class="kpi"><div class="kpi-v c-yellow" id="k-avgmgr">0</div><div class="kpi-l">Ср. время с менеджером (мин)</div></div>
-        <div class="kpi"><div class="kpi-v c-purple" id="k-avgcon">0</div><div class="kpi-l">Ср. время договора (мин)</div></div>
-        <div class="kpi"><div class="kpi-v c-red" id="k-conv">0%</div><div class="kpi-l">Конверсия в договор</div></div>
+  <!-- ADMIN TAB -->
+  <div id="v-admin" class="view">
+    <div class="wrap">
+      <div class="header">
+        <div style="font-size:20px;font-weight:700">⚙️ Панель администратора</div>
       </div>
 
-      <!-- All days summary -->
-      <div id="all-days-section" style="display:none">
-        <div class="sec">По дням</div>
-        <table>
-          <thead><tr>
-            <th>Дата</th><th>Клиентов</th><th>Договоров</th><th>Конверсия</th><th>Ср. время (мин)</th>
-          </tr></thead>
-          <tbody id="days-body"></tbody>
-        </table>
+      <div class="card">
+        <h3>Менеджеры (столы 1–10)</h3>
+        <div class="grid" id="mgr-grid"></div>
+        <div class="actions">
+          <button class="btn-p" onclick="saveMgr()">💾 Сохранить менеджеров</button>
+        </div>
       </div>
 
-      <!-- Manager stats -->
-      <div class="sec">Статистика менеджеров</div>
-      <table>
-        <thead><tr>
-          <th>Менеджер</th><th>Клиентов</th><th>В договорной</th><th>Ср. время</th>
-        </tr></thead>
-        <tbody id="mgr-body"></tbody>
-      </table>
+      <div class="card">
+        <h3>Договорной отдел (столы Д1–Д5)</h3>
+        <div class="grid" id="con-grid"></div>
+        <div class="actions">
+          <button class="btn-p" onclick="saveCon()">💾 Сохранить договорной</button>
+        </div>
+      </div>
 
-      <!-- Contract stats -->
-      <div class="sec">Договорной отдел</div>
-      <table>
-        <thead><tr>
-          <th>Сотрудник</th><th>Договоров</th><th>Ср. время</th>
-        </tr></thead>
-        <tbody id="con-body"></tbody>
-      </table>
-
-      <!-- History -->
-      <div class="sec">История клиентов</div>
-      <table>
-        <thead><tr>
-          <th>Номер</th><th>Менеджер</th><th>Стол</th><th>Время (мин)</th><th>Итог</th><th>Время</th>
-        </tr></thead>
-        <tbody id="hist-body"></tbody>
-      </table>
+      <div class="card">
+        <h3>Управление очередью</h3>
+        <div class="actions">
+          <button class="btn-r" onclick="resetQueue()">🔄 Сбросить очередь сейчас</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
 const PASS = 'taqdimot08/05';
-const MGR_NAMES = ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'];
+const MGR_NAMES_DEF = ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'];
 const MGR_DESKS = ['Стол 1','Стол 2','Стол 3','Стол 4','Стол 5','Стол 6','Стол 7','Стол 8','Стол 9','Стол 10'];
-const CON_NAMES = ['Viktoria','Samira','Rayxona','Gulmira','Aziz'];
+const CON_NAMES_DEF = ['Viktoria','Samira','Rayxona','Gulmira','Aziz'];
 const CON_DESKS = ['Стол Д1','Стол Д2','Стол Д3','Стол Д4','Стол Д5'];
 
-let historyData = {};
-let currentState = {};
+let settings = { mgrNames: [...MGR_NAMES_DEF], conNames: [...CON_NAMES_DEF] };
 
 function checkPass() {
   if(document.getElementById('pass-input').value === PASS) {
     document.getElementById('lock-screen').style.display = 'none';
-    document.getElementById('report-screen').style.display = 'block';
+    document.getElementById('main-screen').style.display = 'block';
+    loadSettings();
     loadReport();
   } else {
     document.getElementById('pass-err').style.display = 'block';
@@ -142,190 +173,169 @@ function checkPass() {
 
 function doLock() {
   document.getElementById('lock-screen').style.display = 'flex';
-  document.getElementById('report-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'none';
   document.getElementById('pass-input').value = '';
 }
 
+function switchTab(tab) {
+  ['report','admin'].forEach(t => {
+    document.getElementById('v-'+t).classList.toggle('active', t===tab);
+    document.querySelectorAll('.tab').forEach((btn,i) => {
+      btn.classList.toggle('active', (i===0&&tab==='report')||(i===1&&tab==='admin'));
+    });
+  });
+  if(tab==='report') loadReport();
+  if(tab==='admin') renderAdminGrids();
+}
+
+// ── REPORT ────────────────────────────────────────
 function onPeriodChange() {
   const p = document.getElementById('period-sel').value;
-  document.getElementById('day-picker').style.display = p === 'day' ? 'block' : 'none';
+  document.getElementById('day-sel').style.display = p==='day' ? 'block' : 'none';
   loadReport();
 }
 
 async function loadReport() {
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('report-content').style.display = 'none';
-
+  document.getElementById('rep-loading').style.display = 'block';
+  document.getElementById('rep-content').style.display = 'none';
   try {
     const res = await fetch('/api/history');
-    historyData = await res.json();
-
-    // Populate day selector
+    const historyData = await res.json();
     const days = Object.keys(historyData).sort().reverse();
     const daySel = document.getElementById('day-sel');
-    daySel.innerHTML = days.map(d => `<option value="${d}">${d}</option>`).join('');
-
+    daySel.innerHTML = days.map(d=>`<option value="${d}">${d}</option>`).join('');
     const period = document.getElementById('period-sel').value;
-
-    if(period === 'today') {
-      const todayKey = getTodayKey();
-      const todayData = historyData[todayKey] || {counter:0, mgrHistory:[], conHistory:[]};
-      renderReport(todayData, 'today', false);
-    } else if(period === 'day') {
-      const selDay = daySel.value;
-      const dayData = historyData[selDay] || {counter:0, mgrHistory:[], conHistory:[]};
-      renderReport(dayData, selDay, false);
+    if(period==='today') {
+      const key = getTodayKey();
+      renderReport(historyData[key]||{counter:0,mgrHistory:[],conHistory:[]}, 'today', false);
+    } else if(period==='day') {
+      const sel = daySel.value||days[0];
+      renderReport(historyData[sel]||{}, sel, false);
     } else {
-      // All days summary
-      renderAllDays();
+      renderAllDays(historyData, days);
     }
   } catch(e) {
-    document.getElementById('loading').textContent = 'Ошибка загрузки: ' + e.message;
+    document.getElementById('rep-loading').textContent = 'Ошибка: '+e.message;
   }
 }
 
 function getTodayKey() {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function renderReport(data, period, showAllDays) {
-  const mgrH = data.mgrHistory || [];
-  const conH = data.conHistory || [];
-  const total = data.counter || mgrH.length;
-  const contracts = conH.length;
+function renderReport(data, period, allDays) {
+  const mgrH = data.mgrHistory||[], conH = data.conHistory||[];
+  const total = data.counter||mgrH.length, contracts = conH.length;
   const avgMgr = mgrH.length ? Math.round(mgrH.reduce((s,h)=>s+(h.dur||0),0)/mgrH.length) : 0;
   const avgCon = conH.length ? Math.round(conH.reduce((s,h)=>s+(h.dur||0),0)/conH.length) : 0;
-  const conv = total > 0 ? Math.round(contracts/total*100) : 0;
-
-  document.getElementById('k-total').textContent = total;
-  document.getElementById('k-contracts').textContent = contracts;
-  document.getElementById('k-avgmgr').textContent = avgMgr;
-  document.getElementById('k-avgcon').textContent = avgCon;
-  document.getElementById('k-conv').textContent = conv + '%';
-
-  const dateStr = period === 'today'
-    ? 'Сегодня · ' + new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+  const conv = total>0 ? Math.round(contracts/total*100) : 0;
+  const set = (id,v) => document.getElementById(id).textContent = v;
+  set('k-total',total); set('k-contracts',contracts); set('k-avgmgr',avgMgr); set('k-avgcon',avgCon); set('k-conv',conv+'%');
+  document.getElementById('report-date').textContent = period==='today'
+    ? 'Сегодня · '+new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
     : period;
-  document.getElementById('report-date').textContent = dateStr;
-
-  // Managers
-  document.getElementById('mgr-body').innerHTML = MGR_NAMES.map((name,i) => {
-    const rows = mgrH.filter(h=>h.manager===name);
-    const sent = rows.filter(h=>h.sent).length;
-    const avg = rows.length ? Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length) : 0;
-    return `<tr>
-      <td>${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
-      <td style="color:#38bdf8;font-weight:700">${rows.length}</td>
-      <td style="color:#fbbf24;font-weight:700">${sent}</td>
-      <td>${rows.length ? avg+'м' : '—'}</td>
-    </tr>`;
+  document.getElementById('mgr-body').innerHTML = settings.mgrNames.map((name,i)=>{
+    const rows=mgrH.filter(h=>h.manager===name);
+    const sent=rows.filter(h=>h.sent).length;
+    const avg=rows.length?Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length):0;
+    return `<tr><td>${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td><td style="color:#38bdf8;font-weight:700">${rows.length}</td><td style="color:#fbbf24;font-weight:700">${sent}</td><td>${rows.length?avg+'м':'—'}</td></tr>`;
   }).join('');
-
-  // Contract dept
-  document.getElementById('con-body').innerHTML = CON_NAMES.map((name,i) => {
-    const rows = conH.filter(h=>h.name===name||h.desk===CON_DESKS[i]);
-    const avg = rows.length ? Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length) : 0;
-    return `<tr>
-      <td>${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
-      <td style="color:#4ade80;font-weight:700">${rows.length}</td>
-      <td>${rows.length ? avg+'м' : '—'}</td>
-    </tr>`;
+  document.getElementById('con-body').innerHTML = settings.conNames.map((name,i)=>{
+    const rows=conH.filter(h=>h.name===name||h.desk===CON_DESKS[i]);
+    const avg=rows.length?Math.round(rows.reduce((s,h)=>s+(h.dur||0),0)/rows.length):0;
+    return `<tr><td>${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td><td style="color:#4ade80;font-weight:700">${rows.length}</td><td>${rows.length?avg+'м':'—'}</td></tr>`;
   }).join('');
-
-  // History
-  document.getElementById('hist-body').innerHTML = mgrH.length === 0
+  document.getElementById('hist-body').innerHTML = mgrH.length===0
     ? '<tr><td colspan="6" style="text-align:center;color:#475569;padding:20px">Нет данных</td></tr>'
-    : mgrH.slice(0,100).map(h=>`<tr>
-      <td style="color:#c9a96e;font-weight:700">${h.ticket}</td>
-      <td>${h.manager||''}</td>
-      <td>${h.desk||''}</td>
-      <td>${h.dur!=null?h.dur+'м':'—'}</td>
-      <td>${h.sent?'<span class="badge b-blue">Договор</span>':'<span class="badge b-green">Завершён</span>'}</td>
-      <td style="color:#475569">${h.time||''}</td>
-    </tr>`).join('');
-
+    : mgrH.slice(0,100).map(h=>`<tr><td style="color:#c9a96e;font-weight:700">${h.ticket}</td><td>${h.manager||''}</td><td>${h.desk||''}</td><td>${h.dur!=null?h.dur+'м':'—'}</td><td>${h.sent?'<span class="badge b-blue">Договор</span>':'<span class="badge b-green">Завершён</span>'}</td><td style="color:#475569">${h.time||''}</td></tr>`).join('');
   document.getElementById('all-days-section').style.display = 'none';
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('report-content').style.display = 'block';
+  document.getElementById('rep-loading').style.display = 'none';
+  document.getElementById('rep-content').style.display = 'block';
 }
 
-function renderAllDays() {
-  const days = Object.keys(historyData).sort().reverse();
-
-  // Overall totals
-  let totalClients=0, totalContracts=0, totalMgrDur=0, mgrCount=0;
-  days.forEach(d => {
-    const data = historyData[d];
-    totalClients += data.counter || (data.mgrHistory||[]).length;
-    totalContracts += (data.conHistory||[]).length;
-    (data.mgrHistory||[]).forEach(h => { totalMgrDur += h.dur||0; mgrCount++; });
+function renderAllDays(historyData, days) {
+  let tc=0,tco=0,tmgr=0,mc=0;
+  days.forEach(d=>{
+    const data=historyData[d];
+    tc+=data.counter||(data.mgrHistory||[]).length;
+    tco+=(data.conHistory||[]).length;
+    (data.mgrHistory||[]).forEach(h=>{tmgr+=h.dur||0;mc++;});
   });
-
-  document.getElementById('k-total').textContent = totalClients;
-  document.getElementById('k-contracts').textContent = totalContracts;
-  document.getElementById('k-avgmgr').textContent = mgrCount ? Math.round(totalMgrDur/mgrCount) : 0;
-  document.getElementById('k-avgcon').textContent = '—';
-  document.getElementById('k-conv').textContent = totalClients > 0 ? Math.round(totalContracts/totalClients*100)+'%' : '0%';
+  const set=(id,v)=>document.getElementById(id).textContent=v;
+  set('k-total',tc);set('k-contracts',tco);set('k-avgmgr',mc?Math.round(tmgr/mc):0);set('k-avgcon','—');set('k-conv',tc>0?Math.round(tco/tc*100)+'%':'0%');
   document.getElementById('report-date').textContent = `Общая статистика · ${days.length} дней`;
-
-  // Days table
-  document.getElementById('days-body').innerHTML = days.map(d => {
-    const data = historyData[d];
-    const cl = data.counter || (data.mgrHistory||[]).length;
-    const co = (data.conHistory||[]).length;
-    const conv = cl > 0 ? Math.round(co/cl*100) : 0;
-    const mh = data.mgrHistory||[];
-    const avg = mh.length ? Math.round(mh.reduce((s,h)=>s+(h.dur||0),0)/mh.length) : 0;
-    return `<tr>
-      <td>${d}</td>
-      <td style="color:#38bdf8;font-weight:700">${cl}</td>
-      <td style="color:#4ade80;font-weight:700">${co}</td>
-      <td>${conv}%</td>
-      <td>${avg ? avg+'м' : '—'}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="5" style="text-align:center;color:#475569;padding:20px">Нет данных</td></tr>';
-
-  // Manager totals across all days
-  document.getElementById('mgr-body').innerHTML = MGR_NAMES.map((name,i) => {
-    let rows=[], sent=0, dur=0;
-    days.forEach(d => {
-      const mh = historyData[d].mgrHistory||[];
-      const r = mh.filter(h=>h.manager===name);
-      rows = rows.concat(r);
-      sent += r.filter(h=>h.sent).length;
-      r.forEach(h=>dur+=h.dur||0);
-    });
-    const avg = rows.length ? Math.round(dur/rows.length) : 0;
-    return `<tr>
-      <td>${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
-      <td style="color:#38bdf8;font-weight:700">${rows.length}</td>
-      <td style="color:#fbbf24;font-weight:700">${sent}</td>
-      <td>${rows.length ? avg+'м' : '—'}</td>
-    </tr>`;
+  document.getElementById('days-body').innerHTML = days.map(d=>{
+    const data=historyData[d];
+    const cl=data.counter||(data.mgrHistory||[]).length, co=(data.conHistory||[]).length;
+    const mh=data.mgrHistory||[], avg=mh.length?Math.round(mh.reduce((s,h)=>s+(h.dur||0),0)/mh.length):0;
+    return `<tr><td>${d}</td><td style="color:#38bdf8;font-weight:700">${cl}</td><td style="color:#4ade80;font-weight:700">${co}</td><td>${cl>0?Math.round(co/cl*100)+'%':'0%'}</td><td>${avg?avg+'м':'—'}</td></tr>`;
+  }).join('')||'<tr><td colspan="5" style="text-align:center;color:#475569;padding:20px">Нет данных</td></tr>';
+  document.getElementById('mgr-body').innerHTML = settings.mgrNames.map((name,i)=>{
+    let rows=[],sent=0,dur=0;
+    days.forEach(d=>{const mh=historyData[d].mgrHistory||[];const r=mh.filter(h=>h.manager===name);rows=rows.concat(r);sent+=r.filter(h=>h.sent).length;r.forEach(h=>dur+=h.dur||0);});
+    return `<tr><td>${MGR_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td><td style="color:#38bdf8;font-weight:700">${rows.length}</td><td style="color:#fbbf24;font-weight:700">${sent}</td><td>${rows.length?Math.round(dur/rows.length)+'м':'—'}</td></tr>`;
   }).join('');
-
-  document.getElementById('con-body').innerHTML = CON_NAMES.map((name,i) => {
-    let rows=[], dur=0;
-    days.forEach(d => {
-      const ch = historyData[d].conHistory||[];
-      const r = ch.filter(h=>h.name===name||h.desk===CON_DESKS[i]);
-      rows = rows.concat(r);
-      r.forEach(h=>dur+=h.dur||0);
-    });
-    const avg = rows.length ? Math.round(dur/rows.length) : 0;
-    return `<tr>
-      <td>${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td>
-      <td style="color:#4ade80;font-weight:700">${rows.length}</td>
-      <td>${rows.length ? avg+'м' : '—'}</td>
-    </tr>`;
+  document.getElementById('con-body').innerHTML = settings.conNames.map((name,i)=>{
+    let rows=[],dur=0;
+    days.forEach(d=>{const ch=historyData[d].conHistory||[];const r=ch.filter(h=>h.name===name||h.desk===CON_DESKS[i]);rows=rows.concat(r);r.forEach(h=>dur+=h.dur||0);});
+    return `<tr><td>${CON_DESKS[i]}<br><span style="font-size:11px;color:#475569">${name}</span></td><td style="color:#4ade80;font-weight:700">${rows.length}</td><td>${rows.length?Math.round(dur/rows.length)+'м':'—'}</td></tr>`;
   }).join('');
-
-  document.getElementById('hist-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#475569;padding:20px">Выберите конкретный день для истории клиентов</td></tr>';
-
+  document.getElementById('hist-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#475569;padding:20px">Выберите конкретный день для истории</td></tr>';
   document.getElementById('all-days-section').style.display = 'block';
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('report-content').style.display = 'block';
+  document.getElementById('rep-loading').style.display = 'none';
+  document.getElementById('rep-content').style.display = 'block';
+}
+
+// ── ADMIN ─────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    if(data.mgrNames) settings.mgrNames = data.mgrNames;
+    if(data.conNames) settings.conNames = data.conNames;
+  } catch(e) {}
+}
+
+function renderAdminGrids() {
+  document.getElementById('mgr-grid').innerHTML = settings.mgrNames.map((name,i)=>
+    `<div class="field"><label>Стол ${i+1}</label><input type="text" id="mgr-${i}" value="${name}"></div>`
+  ).join('');
+  document.getElementById('con-grid').innerHTML = settings.conNames.map((name,i)=>
+    `<div class="field"><label>Стол Д${i+1}</label><input type="text" id="con-${i}" value="${name}"></div>`
+  ).join('');
+}
+
+async function saveMgr() {
+  settings.mgrNames = settings.mgrNames.map((_,i)=>document.getElementById('mgr-'+i).value.trim()||settings.mgrNames[i]);
+  await saveSettings();
+}
+
+async function saveCon() {
+  settings.conNames = settings.conNames.map((_,i)=>document.getElementById('con-'+i).value.trim()||settings.conNames[i]);
+  await saveSettings();
+}
+
+async function saveSettings() {
+  try {
+    await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(settings)});
+    showToast('✓ Сохранено!');
+  } catch(e) { showToast('Ошибка: '+e.message); }
+}
+
+async function resetQueue() {
+  if(!confirm('Сбросить очередь? Все данные текущей очереди будут удалены.')) return;
+  try {
+    await fetch('/api/reset',{method:'POST'});
+    showToast('✓ Очередь сброшена!');
+  } catch(e) { showToast('Ошибка: '+e.message); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 3000);
 }
 </script>
 </body></html>
