@@ -12,7 +12,45 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/report', (req, res) => res.sendFile(path.join(__dirname, 'report.html')));
 
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+
+app.use(express.json());
+
+app.get('/api/settings', (req, res) => res.json(settings));
+
+app.post('/api/settings', (req, res) => {
+  settings = { ...settings, ...req.body };
+  try { fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2)); } catch(e) {}
+  broadcast({ type: 'settings', settings });
+  res.json({ ok: true });
+});
+
+app.post('/api/reset', (req, res) => {
+  state = defaultState();
+  state.date = new Date().toDateString();
+  saveState();
+  broadcast({ type: 'state', state });
+  res.json({ ok: true });
+});
+
+
 const DATA_DIR = process.env.DATA_PATH ? path.dirname(process.env.DATA_PATH) : __dirname;
+
+// Settings file
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+
+function loadSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+  } catch(e) {}
+  return {
+    mgrNames: ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'],
+    conNames: ['Viktoria','Samira','Rayxona','Gulmira','Aziz']
+  };
+}
+
+let settings = loadSettings();
+
 const STATE_FILE = process.env.DATA_PATH || path.join(__dirname, 'data.json');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 

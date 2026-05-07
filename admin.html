@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Golden Lake — Админ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-height:100vh}
+.lock{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
+.lock h2{font-size:18px;color:#94a3b8}
+input{padding:10px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:14px;width:100%}
+button{padding:10px 18px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:13px;cursor:pointer;transition:all .15s}
+button:hover{background:#1e293b}
+.btn-p{background:#1e3a5f;color:#38bdf8;border-color:#38bdf8}
+.btn-r{background:#3d0f0f;color:#f87171;border-color:#f87171}
+.btn-g{background:#0f3d23;color:#4ade80;border-color:#4ade80}
+.err{color:#f87171;font-size:13px;display:none}
+.wrap{max-width:900px;margin:0 auto;padding:20px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+.header h1{font-size:20px;font-weight:700}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px;margin-bottom:16px}
+.card h3{font-size:13px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:#475569}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.save-btn{margin-top:14px}
+.toast{position:fixed;bottom:20px;right:20px;background:#0f3d23;color:#4ade80;border:1px solid #4ade80;padding:10px 18px;border-radius:8px;font-size:13px;display:none;z-index:999}
+</style>
+</head><body>
+
+<div class="lock" id="lock-screen">
+  <div style="font-size:32px">⚙️</div>
+  <h2>Golden Lake — Панель администратора</h2>
+  <input type="password" id="pass-input" placeholder="Пароль" style="max-width:260px;text-align:center" onkeydown="if(event.key==='Enter')checkPass()">
+  <button class="btn-p" onclick="checkPass()">Войти</button>
+  <div class="err" id="pass-err">Неверный пароль</div>
+</div>
+
+<div id="admin-screen" style="display:none">
+  <div class="wrap">
+    <div class="header">
+      <h1>⚙️ Панель администратора</h1>
+      <div style="display:flex;gap:10px">
+        <a href="/" style="color:#38bdf8;font-size:13px;text-decoration:none">← На сайт</a>
+        <button onclick="doLock()">Выйти</button>
+      </div>
+    </div>
+
+    <!-- Manager names -->
+    <div class="card">
+      <h3>Менеджеры (столы 1–10)</h3>
+      <div class="grid" id="mgr-grid"></div>
+      <div class="actions">
+        <button class="btn-p save-btn" onclick="saveMgr()">💾 Сохранить менеджеров</button>
+      </div>
+    </div>
+
+    <!-- Contract names -->
+    <div class="card">
+      <h3>Договорной отдел (столы Д1–Д5)</h3>
+      <div class="grid" id="con-grid"></div>
+      <div class="actions">
+        <button class="btn-p save-btn" onclick="saveCon()">💾 Сохранить договорной</button>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <div class="card">
+      <h3>Управление очередью</h3>
+      <div class="actions">
+        <button class="btn-r" onclick="resetQueue()">🔄 Сбросить очередь сейчас</button>
+        <button class="btn-g" onclick="window.location='/'">🖥 Открыть сайт</button>
+        <button onclick="window.location='/report'">📊 Открыть отчёт</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Сохранено!</div>
+
+<script>
+const PASS = 'taqdimot0805';
+
+let settings = {
+  mgrNames: ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'],
+  conNames: ['Viktoria','Samira','Rayxona','Gulmira','Aziz']
+};
+
+function checkPass() {
+  if(document.getElementById('pass-input').value === PASS) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    loadSettings();
+    renderGrids();
+  } else {
+    document.getElementById('pass-err').style.display = 'block';
+  }
+}
+
+function doLock() {
+  document.getElementById('lock-screen').style.display = 'flex';
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('pass-input').value = '';
+}
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    if(data.mgrNames) settings.mgrNames = data.mgrNames;
+    if(data.conNames) settings.conNames = data.conNames;
+    renderGrids();
+  } catch(e) {}
+}
+
+function renderGrids() {
+  document.getElementById('mgr-grid').innerHTML = settings.mgrNames.map((name,i) =>
+    `<div class="field">
+      <label>Стол ${i+1}</label>
+      <input type="text" id="mgr-${i}" value="${name}">
+    </div>`
+  ).join('');
+
+  document.getElementById('con-grid').innerHTML = settings.conNames.map((name,i) =>
+    `<div class="field">
+      <label>Стол Д${i+1}</label>
+      <input type="text" id="con-${i}" value="${name}">
+    </div>`
+  ).join('');
+}
+
+async function saveMgr() {
+  const names = settings.mgrNames.map((_,i) => document.getElementById('mgr-'+i).value.trim() || settings.mgrNames[i]);
+  settings.mgrNames = names;
+  await saveSettings();
+}
+
+async function saveCon() {
+  const names = settings.conNames.map((_,i) => document.getElementById('con-'+i).value.trim() || settings.conNames[i]);
+  settings.conNames = names;
+  await saveSettings();
+}
+
+async function saveSettings() {
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(settings)
+    });
+    showToast('✓ Сохранено! Страница обновится...');
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    showToast('Ошибка: ' + e.message);
+  }
+}
+
+async function resetQueue() {
+  if(!confirm('Сбросить очередь? Все данные текущей очереди будут удалены.')) return;
+  try {
+    await fetch('/api/reset', {method:'POST'});
+    showToast('✓ Очередь сброшена!');
+  } catch(e) {
+    showToast('Ошибка: ' + e.message);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+</script>
+</body></html>
