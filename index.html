@@ -311,7 +311,16 @@ let state = {
 
 function connect() {
   ws = new WebSocket(WS_URL);
-  ws.onopen = () => { console.log('Connected'); document.getElementById('ws-status').textContent = ''; };
+  ws.onopen = () => { 
+    console.log('Connected'); 
+    document.getElementById('ws-status').textContent = '';
+    // Load settings
+    fetch('/api/settings').then(r=>r.json()).then(s=>{
+      if(s.mgrNames) MGR_NAMES = s.mgrNames;
+      if(s.conNames) CON_NAMES = s.conNames;
+      render();
+    }).catch(()=>{});
+  };
   ws.onclose = () => { 
     document.getElementById('ws-status').textContent = '⚠ Ulanish yoq / Net soedinenia';
     setTimeout(connect, 2000); 
@@ -319,6 +328,11 @@ function connect() {
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
     if (data.type === 'state') { state = data.state; render(); }
+    if (data.type === 'settings') {
+      if(data.settings && data.settings.mgrNames) MGR_NAMES = data.settings.mgrNames;
+      if(data.settings && data.settings.conNames) CON_NAMES = data.settings.conNames;
+      render();
+    }
   };
 }
 
@@ -357,9 +371,9 @@ const BG_SLIDES=Array.from(document.querySelectorAll('._bg')).map(e=>e.src);
 
 
 
-const MGR_NAMES = ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'];
+let MGR_NAMES = ['Samir Narziyev','Shaxnoza Nabiyeva','Gulirana Sulaymanova','Burxoniddin Fatiddinov','Aziz Maxmudov','Javohir Shakirov','Ibrohim Maxmudov','Gulirux Turopova','Shaxlo Umarova','Fotima Nabiyeva'];
 const MGR_DESKS = ['Стол 1', 'Стол 2', 'Стол 3', 'Стол 4', 'Стол 5', 'Стол 6', 'Стол 7', 'Стол 8', 'Стол 9', 'Стол 10'];
-const CON_NAMES = ['Viktoria','Samira','Rayxona','Gulmira','Aziz'];
+let CON_NAMES = ['Viktoria','Samira','Rayxona','Gulmira','Aziz'];
 const CON_DESKS = ['Стол Д1', 'Стол Д2', 'Стол Д3', 'Стол Д4', 'Стол Д5'];
 
 const cache={};

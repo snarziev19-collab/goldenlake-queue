@@ -78,6 +78,7 @@ select{padding:8px 14px;border-radius:8px;border:1px solid #334155;background:#0
           </select>
           <select id="day-sel" style="display:none" onchange="loadReport()"></select>
           <button onclick="loadReport()">🔄 Обновить</button>
+          <button class="btn-g" onclick="exportExcel()">📥 Скачать Excel</button>
         </div>
       </div>
 
@@ -337,5 +338,77 @@ function showToast(msg) {
   t.style.display = 'block';
   setTimeout(()=>t.style.display='none', 3000);
 }
+
+function exportExcel() {
+  const period = document.getElementById('period-sel').value;
+  const rows = [];
+
+  // Header
+  rows.push(['Golden Lake — Отчёт', '', '', '', '', '']);
+  rows.push(['Дата:', document.getElementById('report-date').textContent, '', '', '', '']);
+  rows.push(['', '', '', '', '', '']);
+
+  // KPIs
+  rows.push(['ПОКАЗАТЕЛИ', '', '', '', '', '']);
+  rows.push(['Всего клиентов', document.getElementById('k-total').textContent, '', '', '', '']);
+  rows.push(['Договоров', document.getElementById('k-contracts').textContent, '', '', '', '']);
+  rows.push(['Конверсия', document.getElementById('k-conv').textContent, '', '', '', '']);
+  rows.push(['Ср. время менеджер (мин)', document.getElementById('k-avgmgr').textContent, '', '', '', '']);
+  rows.push(['Ср. время договор (мин)', document.getElementById('k-avgcon').textContent, '', '', '', '']);
+  rows.push(['', '', '', '', '', '']);
+
+  // Managers
+  rows.push(['МЕНЕДЖЕРЫ', '', '', '', '', '']);
+  rows.push(['Стол', 'Имя', 'Клиентов', 'В договорной', 'Ср. время', '']);
+  document.querySelectorAll('#mgr-body tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length >= 4) {
+      const desk = tds[0].childNodes[0].textContent.trim();
+      const name = tds[0].querySelector('span') ? tds[0].querySelector('span').textContent : '';
+      rows.push([desk, name, tds[1].textContent, tds[2].textContent, tds[3].textContent, '']);
+    }
+  });
+  rows.push(['', '', '', '', '', '']);
+
+  // Contract
+  rows.push(['ДОГОВОРНОЙ ОТДЕЛ', '', '', '', '', '']);
+  rows.push(['Стол', 'Имя', 'Договоров', 'Ср. время', '', '']);
+  document.querySelectorAll('#con-body tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length >= 3) {
+      const desk = tds[0].childNodes[0].textContent.trim();
+      const name = tds[0].querySelector('span') ? tds[0].querySelector('span').textContent : '';
+      rows.push([desk, name, tds[1].textContent, tds[2].textContent, '', '']);
+    }
+  });
+  rows.push(['', '', '', '', '', '']);
+
+  // History
+  rows.push(['ИСТОРИЯ КЛИЕНТОВ', '', '', '', '', '']);
+  rows.push(['Номер', 'Менеджер', 'Стол', 'Время (мин)', 'Итог', 'Время']);
+  document.querySelectorAll('#hist-body tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length >= 6) {
+      rows.push([
+        tds[0].textContent, tds[1].textContent, tds[2].textContent,
+        tds[3].textContent, tds[4].textContent.trim(), tds[5].textContent
+      ]);
+    }
+  });
+
+  // Convert to CSV (Excel compatible)
+  const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const bom = '\uFEFF'; // UTF-8 BOM for Excel
+  const blob = new Blob([bom + csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toLocaleDateString('ru-RU').replace(/\./g,'-');
+  a.download = 'GoldenLake_Otchet_' + date + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Файл скачан!');
+}
+
 </script>
 </body></html>
