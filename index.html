@@ -179,6 +179,8 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
   </div>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
     <span style="font-size:13px;color:#64748b">Рабочее место:</span>
+    <span id="mgr-desk-label" style="display:none;font-size:14px;font-weight:600;color:#38bdf8"></span>
+    <button id="mgr-change-btn" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#64748b;cursor:pointer" onclick="changeMgrDesk()">Сменить</button>
     <select class="sel" id="mgr-sel" onchange="render()"><option value="0">Стол 1 — Samir Narziyev</option><option value="1">Стол 2 — Shaxnoza Nabiyeva</option><option value="2">Стол 3 — Gulirana Sulaymanova</option><option value="3">Стол 4 — Burxoniddin Fatiddinov</option><option value="4">Стол 5 — Aziz Maxmudov</option><option value="5">Стол 6 — Javohir Shakirov</option><option value="6">Стол 7 — Ibrohim Maxmudov</option><option value="7">Стол 8 — Gulirux Turopova</option><option value="8">Стол 9 — Shaxlo Umarova</option><option value="9">Стол 10 — Fotima Nabiyeva</option></select>
   </div>
   <div class="card" style="text-align:center;padding:1.5rem">
@@ -216,6 +218,8 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
   </div>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
     <span style="font-size:13px;color:#64748b">Рабочее место:</span>
+    <span id="con-desk-label" style="display:none;font-size:14px;font-weight:600;color:#38bdf8"></span>
+    <button id="con-change-btn" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#64748b;cursor:pointer" onclick="changeConDesk()">Сменить</button>
     <select class="sel" id="con-sel" onchange="render()"><option value="0">Стол Д1 — Viktoria</option><option value="1">Стол Д2 — Samira</option><option value="2">Стол Д3 — Rayxona</option><option value="3">Стол Д4 — Gulmira</option><option value="4">Стол Д5 — Aziz</option></select>
   </div>
   <p class="sec">Входящие заявки</p>
@@ -403,7 +407,19 @@ function confirmMgrDesk() {
 function applyMgrDesk(idx) {
   document.getElementById('mgr-lock-overlay').style.display = 'none';
   const sel = document.getElementById('mgr-sel');
-  if(sel) { sel.value = idx; render(); }
+  if(sel) { 
+    sel.value = idx;
+    sel.style.display = 'none'; // hide dropdown
+    // Show desk name + change button
+    const deskLabel = document.getElementById('mgr-desk-label');
+    if(deskLabel) {
+      deskLabel.textContent = MGR_DESKS[idx] + ' — ' + MGR_NAMES[idx];
+      deskLabel.style.display = 'inline';
+    }
+    const chBtn = document.getElementById('mgr-change-btn');
+    if(chBtn) chBtn.style.display = 'inline';
+    render();
+  }
 }
 
 function initConLock() {
@@ -427,7 +443,35 @@ function confirmConDesk() {
 function applyConDesk(idx) {
   document.getElementById('con-lock-overlay').style.display = 'none';
   const sel = document.getElementById('con-sel');
-  if(sel) { sel.value = idx; render(); }
+  if(sel) {
+    sel.value = idx;
+    sel.style.display = 'none';
+    const deskLabel = document.getElementById('con-desk-label');
+    if(deskLabel) {
+      deskLabel.textContent = CON_DESKS[idx] + ' — ' + CON_NAMES[idx];
+      deskLabel.style.display = 'inline';
+    }
+    const chBtn = document.getElementById('con-change-btn');
+    if(chBtn) chBtn.style.display = 'inline';
+    render();
+  }
+}
+
+
+function changeMgrDesk() {
+  sessionStorage.removeItem('mgr-desk');
+  document.getElementById('mgr-sel').style.display = '';
+  document.getElementById('mgr-desk-label').style.display = 'none';
+  document.getElementById('mgr-change-btn').style.display = 'none';
+  document.getElementById('mgr-lock-overlay').style.display = 'flex';
+}
+
+function changeConDesk() {
+  sessionStorage.removeItem('con-desk');
+  document.getElementById('con-sel').style.display = '';
+  document.getElementById('con-desk-label').style.display = 'none';
+  document.getElementById('con-change-btn').style.display = 'none';
+  document.getElementById('con-lock-overlay').style.display = 'flex';
 }
 
 function playDing() {
