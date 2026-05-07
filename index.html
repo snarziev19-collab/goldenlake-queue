@@ -142,7 +142,7 @@ body{font-family:system-ui,sans-serif;background:#080d1a;color:#f1f5f9;min-heigh
   <p>Хотиржамлик маскани</p>
   <div style="display:flex;flex-direction:column;gap:10px;width:260px;margin-top:8px">
     <input class="login-inp" id="login-user" type="text" placeholder="Логин" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()" oninput="checkPassNeeded()">
-    <input class="login-inp" id="login-pass" type="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()">
+    <input class="login-inp" id="login-pass" type="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()" style="display:none">
     <button class="btn btn-p" style="padding:12px;font-size:15px;width:100%" onclick="doLogin()">Войти</button>
   </div>
   <div class="login-err" id="login-err">Неверный логин или пароль</div>
@@ -392,12 +392,12 @@ connect();
 
 // ── Login system ──────────────────────────────────
 const ACCOUNTS = {
-  'stoika':   { pass: 'gl2024',       tab: 'kiosk' },
-  'manager':  { pass: 'gl2024',       tab: 'manager' },
-  'dogovor':  { pass: 'gl2024',       tab: 'contract' },
-  'screen1':  { pass: '',             tab: 'screen1' },
-  'screen2':  { pass: '',             tab: 'screen2' },
-  'admin':    { pass: 'taqdimot0805', tab: null }
+  'stoika':   { pass: '', tab: 'kiosk' },
+  'manager':  { pass: '', tab: 'manager' },
+  'dogovor':  { pass: '', tab: 'contract' },
+  'screen1':  { pass: '', tab: 'screen1' },
+  'screen2':  { pass: '', tab: 'screen2' },
+  'admin01':  { pass: '', tab: null }
 };
 
 function doLogin() {
@@ -425,14 +425,7 @@ function doLogin() {
 
 
 function checkPassNeeded() {
-  const user = document.getElementById('login-user').value.trim().toLowerCase();
-  const passInp = document.getElementById('login-pass');
-  const noPassAccounts = ['screen1', 'screen2'];
-  if(noPassAccounts.includes(user)) {
-    passInp.style.display = 'none';
-  } else {
-    passInp.style.display = 'block';
-  }
+  // No passwords needed for anyone
 }
 
 function showLoginErr() {
