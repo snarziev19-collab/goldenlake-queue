@@ -390,6 +390,33 @@ function send(type, payload={}) {
 
 connect();
 
+
+// Auto screen login (from /screen1 or /screen2 redirect)
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const autoscreen = params.get('autoscreen');
+  if(autoscreen === 'screen1' || autoscreen === 'screen2') {
+    // Save to localStorage
+    try { localStorage.setItem('gl-screen', autoscreen); } catch(e) {}
+    // Hide login and show screen directly
+    const ls = document.getElementById('login-screen');
+    if(ls) ls.style.display = 'none';
+    window.addEventListener('load', () => { if(typeof applyTab==='function') applyTab(autoscreen); });
+  }
+})();
+
+// Auto-login for screens
+(function(){
+  try {
+    const saved = localStorage.getItem('gl-screen');
+    if(saved === 'screen1' || saved === 'screen2') {
+      document.getElementById('login-screen').style.display = 'none';
+      window.addEventListener('load', () => applyTab(saved));
+    }
+  } catch(e) {}
+})();
+
+
 // ── Login system ──────────────────────────────────
 const ACCOUNTS = {
   'stoika':   { pass: '', tab: 'kiosk' },
@@ -411,16 +438,24 @@ function doLogin() {
   // Success
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('login-err').style.display = 'none';
+  // Save screen sessions to localStorage
+  if(user === 'screen1' || user === 'screen2') {
+    try { localStorage.setItem('gl-screen', user); } catch(e) {}
+  }
   // Apply tab restriction
   if(acc.tab) {
-    const tabMap = {'kiosk':0,'manager':1,'contract':2,'screen1':3,'screen2':4,'admin':5};
-    const buttons = document.querySelectorAll('.tab');
-    buttons.forEach((btn, i) => {
-      btn.style.display = (i === tabMap[acc.tab]) ? '' : 'none';
-    });
-    sw(acc.tab);
+    applyTab(acc.tab);
   }
   // Admin sees all tabs
+}
+
+function applyTab(tab) {
+  const tabMap = {'kiosk':0,'manager':1,'contract':2,'screen1':3,'screen2':4,'admin':5};
+  const buttons = document.querySelectorAll('.tab');
+  buttons.forEach((btn, i) => {
+    btn.style.display = (i === tabMap[tab]) ? '' : 'none';
+  });
+  sw(tab);
 }
 
 

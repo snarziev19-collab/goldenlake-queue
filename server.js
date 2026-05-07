@@ -11,6 +11,8 @@ const wss = new WebSocketServer({ server });
 app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/report', (req, res) => res.sendFile(path.join(__dirname, 'report.html')));
+app.get('/screen1', (req, res) => res.sendFile(path.join(__dirname, 'screen1.html')));
+app.get('/screen2', (req, res) => res.sendFile(path.join(__dirname, 'screen2.html')));
 
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
