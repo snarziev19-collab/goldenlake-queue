@@ -204,7 +204,11 @@ async function loadReport() {
     const historyData = await res.json();
     const days = Object.keys(historyData).sort().reverse();
     const daySel = document.getElementById('day-sel');
+    // Save current selection before rebuilding
+    const currentSel = daySel.value;
     daySel.innerHTML = days.map(d=>`<option value="${d}">${d}</option>`).join('');
+    // Restore selection if it existed
+    if(currentSel && days.includes(currentSel)) daySel.value = currentSel;
     const period = document.getElementById('period-sel').value;
     if(period==='today') {
       const key = getTodayKey();
